@@ -1,0 +1,6 @@
+.vs/
+*.iobj
+*.ipdb
+*.tlog
+*.log
+*.pdb
