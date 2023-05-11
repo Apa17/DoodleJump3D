@@ -24,6 +24,7 @@ SDL_Event evento;
 
 float x, y, z;
 GLuint* texturas;
+GLuint* texturas_digitos;
 
 float degrees = 0;
 
@@ -60,7 +61,7 @@ void manejoEventos() {
 }
 
 
-void cargarTextura(char* archivo, int i) {
+void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(archivo);
 	FIBITMAP* bitmap = FreeImage_Load(fif, archivo);
 	cout << archivo << bitmap << endl;
@@ -68,7 +69,7 @@ void cargarTextura(char* archivo, int i) {
 	int w = FreeImage_GetWidth(bitmap);
 	int h = FreeImage_GetHeight(bitmap);
 	void* datos= FreeImage_GetBits(bitmap);
-	glBindTexture(GL_TEXTURE_2D, texturas[i]);
+	glBindTexture(GL_TEXTURE_2D, texturas_array[i]);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -78,18 +79,58 @@ void cargarTextura(char* archivo, int i) {
 }
 
 void cargarTexturas() {
-	texturas = new GLuint[2];
-	glGenTextures(2, texturas);
+	texturas = new GLuint[3];
+	glGenTextures(3, texturas);
 	cout << texturas << endl;
 
-	//archivos
-	char* archivo = new char[20];
-	archivo = "../canon.png";
-	cargarTextura(archivo,0);
+	texturas_digitos = new GLuint[11];
+	glGenTextures(11, texturas_digitos);
 
-	char* archivo2 = new char[20];
-	archivo2 = "../numeros.jpg";
-	cargarTextura(archivo2,1);
+	//archivos
+	char archivo[] = "../canon.png";
+	cargarTextura(archivo,0, texturas);
+
+	char archivo2[] = "../score.png";
+	cargarTextura(archivo2,1, texturas);
+
+	char archivo3[] = "../time.png";
+	cargarTextura(archivo3, 2, texturas);
+
+	// Cargo texturas de numeros
+	char archivo_temp[] = "../0.png";
+	cargarTextura(archivo_temp, 0, texturas_digitos);
+
+	archivo_temp[3] = '1';
+	cargarTextura(archivo_temp, 1, texturas_digitos);
+
+	archivo_temp[3] = '2';
+	cargarTextura(archivo_temp, 2, texturas_digitos);
+
+	archivo_temp[3] = '3';
+	cargarTextura(archivo_temp, 3, texturas_digitos);
+
+	archivo_temp[3] = '4';
+	cargarTextura(archivo_temp, 4, texturas_digitos);
+
+	archivo_temp[3] = '5';
+	cargarTextura(archivo_temp, 5, texturas_digitos);
+
+	archivo_temp[3] = '6';
+	cargarTextura(archivo_temp, 6, texturas_digitos);
+
+	archivo_temp[3] = '7';
+	cargarTextura(archivo_temp, 7, texturas_digitos);
+
+	archivo_temp[3] = '8';
+	cargarTextura(archivo_temp, 8, texturas_digitos);
+
+	archivo_temp[3] = '9';
+	cargarTextura(archivo_temp, 9, texturas_digitos);
+
+
+	char archivo_punto[] = "../punto.png";
+	cargarTextura(archivo_punto, 10, texturas_digitos);
+
 	
 	//FIN CARGAR IMAGEN
 
@@ -139,6 +180,74 @@ void dibujarObjetos() {
 }
 
 
+
+// Funcion que usamos para pasar numeros a lista de chars y dibujarlos luego.
+void collect_digits(std::vector<int>& digits, unsigned long num) {
+	if (num > 9) {
+		collect_digits(digits, num / 10);
+	}
+	digits.push_back(num % 10);
+}
+
+void drawNum(bool time, unsigned int pos, unsigned int num) {
+	int ymin;
+	int ymax;
+	if (time) {
+		ymin = 55;
+		ymax = 70;
+	}
+	else {
+		ymin = 25;
+		ymax = 45;
+	}
+	int xmin = 80 + (pos * 15);
+	int xmax = xmin + 15;
+
+	// Dibuja numero
+	glBindTexture(GL_TEXTURE_2D, texturas_digitos[num]);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2i(xmin, ymin);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2i(xmax, ymin);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2i(xmax, ymax);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2i(xmin, ymax);
+	glEnd();
+}
+
+void drawNumeros(int score, int min, int sec) {
+	std::vector<int> digitos_score;
+	collect_digits(digitos_score, score);
+	std::vector<int> digitos_min;
+	collect_digits(digitos_min, min);
+	std::vector<int> digitos_sec;
+	collect_digits(digitos_sec, sec);
+
+	int i = 0;
+	for (int n : digitos_score) {
+		drawNum(false, i, n);
+		i++;
+	}
+
+	i = 0;
+	for (int n : digitos_min) {
+		drawNum(true, i, n);
+		i++;
+	}
+
+	if (i > 0) {
+		drawNum(true, i, 10);
+		i++;
+	}
+
+	for (int n : digitos_sec) {
+		drawNum(true, i, n);
+		i++;
+	}
+}
+
 void drawHud() {
 	//save state
 	glMatrixMode(GL_PROJECTION);
@@ -150,30 +259,62 @@ void drawHud() {
 	glPushMatrix();
 	glLoadIdentity();
 
-	glDisable(GL_LIGHTING);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+
+	// Dibuja el HUD
+	glBegin(GL_QUADS);
+	glColor3f(255.0, 255.0, 255.0);
+	glVertex2i(20, 20);
+	glVertex2i(180, 20);
+	glVertex2i(180, 80);
+	glVertex2i(20, 80);
+	glEnd();
+
 
 	//enable textures if textOn
 	if (textOn) {
 		glEnable(GL_TEXTURE_2D);
+
+		// Dibuja score
 		glBindTexture(GL_TEXTURE_2D, texturas[1]);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex2i(30, 20);
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex2i(80, 20);
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex2i(80, 50);
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex2i(30, 50);
+		glEnd();
+
+		// Dibuja time
+		glBindTexture(GL_TEXTURE_2D, texturas[2]);
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex2i(30, 50);
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex2i(80, 50);
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex2i(80, 76);
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex2i(30, 76);
+		glEnd();
+
+		drawNumeros(10, 2, 55);
 	}
 	else {
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	}
-	// Dibuja el HUD
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2i(40, 40);
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2i(150, 40);
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2i(150, 100);
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2i(40, 100);
-	glEnd();
+
+
+
+
 	// Termina de dibujar
 	
 	//carga las matrices previas
