@@ -79,8 +79,8 @@ void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 }
 
 void cargarTexturas() {
-	texturas = new GLuint[3];
-	glGenTextures(3, texturas);
+	texturas = new GLuint[4];
+	glGenTextures(4, texturas);
 	cout << texturas << endl;
 
 	texturas_digitos = new GLuint[11];
@@ -95,6 +95,9 @@ void cargarTexturas() {
 
 	char archivo3[] = "../time.png";
 	cargarTextura(archivo3, 2, texturas);
+
+	char archivo4[] = "../fondo.jpg";
+	cargarTextura(archivo4, 3, texturas);
 
 	// Cargo texturas de numeros
 	char archivo_temp[] = "../0.png";
@@ -136,6 +139,78 @@ void cargarTexturas() {
 
 	
 	
+}
+
+void draw_background() {
+
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texturas[3]);
+	glDisable(GL_DEPTH_TEST);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0, w, 0, h, -1, 1);
+
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glBegin(GL_QUADS);
+
+	glColor3f(1, 1, 1);
+	glTexCoord2f(0, 0);
+	glVertex2f(-w, -h);
+	glTexCoord2f(1, 0);
+	glVertex2f(w, -h);
+	glTexCoord2f(1, 1);
+	glVertex2f(w, h);
+	glTexCoord2f(0, 1);
+	glVertex2f(-w, h);
+
+	glEnd();
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+}
+
+void dibujar_plataforma(GLfloat x, GLfloat y) {
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(0.5f, 0.0f, 0.0f);
+	glBegin(GL_QUAD_STRIP);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
+	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
+	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
+	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
+	glEnd();
+
 }
 
 void dibujarObjetos() {
@@ -319,7 +394,6 @@ void drawHud() {
 	
 	//carga las matrices previas
 	glPopMatrix();
-
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -365,8 +439,10 @@ int main(int argc, char *argv[]) {
 	
 	//LOOP PRINCIPAL
 	do{
+		
 		previous_time = current_time;
 		current_time = system_clock::now();
+
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
@@ -388,8 +464,19 @@ int main(int argc, char *argv[]) {
 		}
 		glRotatef(degrees, 0.0, 1.0, 0.0);
 
+
 		//DIBUJAR 
-		dibujarObjetos();
+		draw_background();
+		//TRANSFORMACIONES LINEALES
+		if (rotation) {
+			degrees = degrees + 1;
+		}
+		glRotatef(degrees, 0.0, 1.0, 0.0);
+		//dibujarObjetos();
+		glEnable(GL_LIGHTING);
+		dibujar_plataforma(1, 0);
+		dibujar_plataforma(1, 1);
+		dibujar_plataforma(1, 2);
 		drawHud();
 		
 
