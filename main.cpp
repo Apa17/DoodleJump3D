@@ -21,20 +21,63 @@ GLfloat luz_posicion1[4] = { 0, 0, -1, 1 };
 GLfloat colorLuz[4] = { 1, 1, 1, 1 };
 bool textOn;
 bool fin;
-bool rotation;
+
 
 SDL_Event evento;
 
+
 float x, y, z;
+float posx = 0, posy = 0;
+float posyWorld = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
 
-float degrees = 0;
+const double velocidadInicialX = 5;
+const double velocidadInicialY = 3;
+bool jumping = false;
+bool falling = false;
+double velocidadX = velocidadInicialX;
+double velocidadY = velocidadInicialY;
+bool strifingRight = false;
+bool strifingLeft = false;
 
+const double aceleracionG = 10;
 const double FPS = 60;
 const int w = 640;
 const int h = 480;
 Objeto3d* objetos3d;
+
+struct Plataforma {
+	int x;
+	float tamaño;
+};
+
+vector<Plataforma> plataformas;
+
+const int max_plataformas = 7;
+
+void dibujar_doodle() {
+	glPushMatrix();
+	glRotatef(90, 0.0, 1.0, 0.0); //lo pongo de frente
+	glScalef(0.2, 0.2, 0.2); //lo achico
+	objetos3d->draw(posx, posy, 0, 1.0, 1.0, 1.0, colorLuz);
+	glPopMatrix();
+}
+
+void re_inicicializacion() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0);
+
+	//PRENDO LA LUZ (SIEMPRE DESPUES DEL gluLookAt)
+	glEnable(GL_LIGHT0); // habilita la luz 0
+	glLightfv(GL_LIGHT0, GL_POSITION, luz_posicion);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
+
+	glEnable(GL_LIGHT1); // habilita la luz 1
+	glLightfv(GL_LIGHT1, GL_POSITION, luz_posicion1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz);
+}
 
 void pausa() {
 	bool paused = true;
@@ -55,43 +98,53 @@ void pausa() {
 	}
 }
 
-
 void manejoEventos() {
 	while (SDL_PollEvent(&evento)) {
 		switch (evento.type) {
-		case SDL_KEYDOWN:
-			switch (evento.key.keysym.sym) {
-				case SDLK_q:
-					fin = true;
-					break;
-				case SDLK_p:
-					pausa();
-					break;
-			}
-		case SDL_MOUSEBUTTONDOWN:
-			rotation = true;
-			break;
-		case SDL_MOUSEBUTTONUP:
-			rotation = false;
-			break;
-		case SDL_QUIT:
-			fin = true;
-			break;
-		case SDL_KEYUP:
-			switch (evento.key.keysym.sym) {
-			case SDLK_ESCAPE:
+			case SDL_MOUSEBUTTONDOWN:
+				break;
+			case SDL_MOUSEBUTTONUP:
+				break;
+			case SDL_QUIT:
 				fin = true;
 				break;
-			case SDLK_l:
-				textOn = !textOn;
+			case SDL_KEYDOWN:
+				switch (evento.key.keysym.sym) {
+					case SDLK_RIGHT:
+						strifingRight = true;
+						break;
+					case SDLK_LEFT:
+						strifingLeft = true;
+						break;
+				}
 				break;
-			case SDLK_RIGHT:
-				break;
+			case SDL_KEYUP:
+				switch (evento.key.keysym.sym) {
+					case SDLK_RETURN:
+						break;
+					case SDLK_ESCAPE:
+						fin = true;
+						break;
+					case SDLK_l:
+						textOn = !textOn;
+						break;
+					case SDLK_q:
+						fin = true;
+						break;
+					case SDLK_p:
+						pausa();
+						break;
+					case SDLK_DOWN:
+						falling = !falling;
+						break;
+					case SDLK_UP:
+						jumping = !jumping;
+						break;
+					
 			}
 		}
 	}
 }
-
 
 void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(archivo);
@@ -246,9 +299,15 @@ void dibujar_plataforma(GLfloat x, GLfloat y) {
 }
 
 void dibujarObjetos() {
-	dibujar_plataforma(1, 0);
-	dibujar_plataforma(1, 1);
-	dibujar_plataforma(1, 2);
+	glPushMatrix();
+		glTranslatef(0, posyWorld, 0.0);
+		for(int i=0 ; i<300; i++)
+			dibujar_plataforma(i % 3, i);
+	glPopMatrix();
+	glPushMatrix();
+		glTranslatef(posx, posy, 0.0);
+		dibujar_doodle();
+	glPopMatrix();
 }
 
 
@@ -399,14 +458,64 @@ void drawHud() {
 	glEnable(GL_LIGHTING);
 }
 
+void controlar_movimiento(std::chrono::duration<double> deltatime) {
+	if (jumping) {
+		velocidadY = velocidadY - aceleracionG * deltatime.count();
+		double incremento = (velocidadInicialY + velocidadY) * deltatime.count() - (1 / 2) * aceleracionG * deltatime.count() * deltatime.count();
+		posy += incremento;
+		cout << incremento << endl;
+		if (velocidadY < 0) {
+			falling = true;
+		}
+		else {
+			falling = false;
+		}
+		if (falling) {
+
+		}
+		else {
+			posyWorld -= deltatime.count() * 2;
+		}
+	}
+	else {
+		velocidadY = velocidadInicialY;
+		velocidadX = velocidadInicialX;
+	}
+	if (strifingLeft) {
+		posx -= velocidadX * deltatime.count();
+		strifingLeft = false;
+	}
+	if (strifingRight) {
+		posx += velocidadX * deltatime.count();
+		strifingRight = false;
+	}
+}
+
+void inicializar_plataformas() {
+	// Inicializa plataformas y piso
+	Plataforma piso;
+	piso.x = 0.0f;
+	piso.tamaño = 6.5;
+	plataformas.push_back(piso);
+	int x_plat;
+	for (int i = 1; i < 7; i++) {
+		x_plat = (rand() % 5) - 2;
+		Plataforma plataforma1;
+		plataforma1.x = x_plat;
+		plataforma1.tamaño = 1.2f;
+		plataformas.push_back(plataforma1);
+	}
+}
+
 int main(int argc, char *argv[]) {
+	srand(time(0));
 	//INICIALIZACION
 	if (SDL_Init(SDL_INIT_VIDEO)<0) {
 		cerr << "No se pudo iniciar SDL: " << SDL_GetError() << endl;
 		exit(1);
 	}
 
-	SDL_Window* win = SDL_CreateWindow("Doodle Jump 3d",
+	SDL_Window* win = SDL_CreateWindow("Doodle Jump 3D",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
@@ -417,10 +526,10 @@ int main(int argc, char *argv[]) {
 	z = 7;
 	textOn = true;
 	fin = false;
-	rotation = false;
-	degrees = 0;
 	current_time = system_clock::now();
 	std::chrono::duration<double> delta_pausa_time, deltatime;
+
+	inicializar_plataformas();
 
 	glMatrixMode(GL_PROJECTION);
 
@@ -436,48 +545,19 @@ int main(int argc, char *argv[]) {
 	//FIN INICIALIZACION 
 	
 	//LOOP PRINCIPAL
-	do{
-		
+	do {
+
 		previous_time = current_time;
 		current_time = system_clock::now();
 		deltatime = (current_time - previous_time - delta_pausa_time);
 		delta_pausa_time -= delta_pausa_time;
-
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glLoadIdentity();
-		gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0);
-
-		//PRENDO LA LUZ (SIEMPRE DESPUES DEL gluLookAt)
-		glEnable(GL_LIGHT0); // habilita la luz 0
-		glLightfv(GL_LIGHT0, GL_POSITION, luz_posicion);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
+		controlar_movimiento(deltatime);
+		re_inicicializacion();
 		
-		glEnable(GL_LIGHT1); // habilita la luz 1
-		glLightfv(GL_LIGHT1, GL_POSITION, luz_posicion1);
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz);
-
-		glPushMatrix();
-		//TRANSFORMACIONES LINEALES
-		if (rotation){
-			degrees = degrees + 1;
-		}
-		glRotatef(degrees, 0.0, 1.0, 0.0);
-
-
 		//DIBUJAR 
 		draw_background();
-		
-		//TRANSFORMACIONES LINEALES
-		if (rotation) {
-			degrees = degrees + 1;
-		}
-		glRotatef(degrees, 0.0, 1.0, 0.0);
-		glEnable(GL_LIGHTING);
-		dibujarObjetos();
 		drawHud();
-		
-
+		dibujarObjetos();
 		
 
 		//MANEJO DE EVENTOS
