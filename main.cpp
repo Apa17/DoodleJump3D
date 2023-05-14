@@ -22,6 +22,10 @@ GLfloat colorLuz[4] = { 1, 1, 1, 1 };
 bool textOn;
 bool fin;
 bool rotation;
+bool velocidad_rapida = false;
+bool texturas_on = true;
+bool wireframe = false;
+bool facetado = false;
 string mode = "MAIN MENU";
 string selected = "NIVELES";
 
@@ -66,15 +70,53 @@ void manejoEventos() {
 						selected = "VELOCIDAD";
 					}
 				}
+				else if (mode == "SETTINGS") {
+					if (selected == "VELOCIDAD") {
+						velocidad_rapida = !velocidad_rapida;
+					}
+					if (selected == "TEXTURAS") {
+						texturas_on = !texturas_on;
+						wireframe = (!texturas_on) && (wireframe);
+					}
+					if (selected == "WIREFRAME") {
+						wireframe = !wireframe;
+						texturas_on = (!wireframe) && (texturas_on);
+					}
+					if (selected == "FACETADO") {
+						facetado = !facetado;
+					}
+				}
 				break;
 			case SDLK_UP:
 				if (mode == "MAIN MENU") {
 					selected = "NIVELES";
 				}
+				if (mode == "SETTINGS") {
+					if (selected == "TEXTURAS") {
+						selected = "VELOCIDAD";
+					}
+					else if (selected == "WIREFRAME") {
+						selected = "TEXTURAS";
+					}
+					else {
+						selected = "WIREFRAME";
+					}
+				}
 				break;
 			case SDLK_DOWN:
 				if (mode == "MAIN MENU") {
 					selected = "SETTINGS";
+				}
+				if (mode == "SETTINGS") {
+					if (selected == "VELOCIDAD") {
+						selected = "TEXTURAS";
+					}
+					else if (selected == "TEXTURAS") {
+						selected = "WIREFRAME";
+					}
+					else {
+						selected = "FACETADO";
+					}
 				}
 				break;
 			}
@@ -202,6 +244,12 @@ void cargarTexturas() {
 	char facetado_s[] = "../facetado_selected.png";
 	cargarTextura(facetado_s, 11, texturas_menu);
 
+	char check[] = "../check.png";
+	cargarTextura(check, 12, texturas_menu);
+
+	char nocheck[] = "../nocheck.png";
+	cargarTextura(nocheck, 13, texturas_menu);
+
 	
 	//FIN CARGAR IMAGEN
 
@@ -275,13 +323,13 @@ void draw_menu(string menu) {
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 250);
+		glVertex2i(220, 250);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 330);
+		glVertex2i(220, 330);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 330);
+		glVertex2i(420, 330);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 250);
+		glVertex2i(420, 250);
 		glEnd();
 
 		text = 1;
@@ -291,13 +339,13 @@ void draw_menu(string menu) {
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 150);
+		glVertex2i(220, 150);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 230);
+		glVertex2i(220, 230);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 230);
+		glVertex2i(420, 230);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 150);
+		glVertex2i(420, 150);
 		glEnd();
 	}
 	else if(mode == "SETTINGS") {
@@ -310,61 +358,134 @@ void draw_menu(string menu) {
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 380);
+		glVertex2i(220, 380);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 460);
+		glVertex2i(220, 460);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 460);
+		glVertex2i(420, 460);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 380);
+		glVertex2i(420, 380);
 		glEnd();
 
-		int text = 5;
+		if (velocidad_rapida) {
+			text = 12;
+		}
+		else {
+			text = 13;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(470, 390);
+		glTexCoord2f(0, 1);
+		glVertex2i(470, 450);
+		glTexCoord2f(1, 1);
+		glVertex2i(530, 450);
+		glTexCoord2f(1, 0);
+		glVertex2i(530, 390);
+		glEnd();
+
+
+		text = 5;
 		if (selected == "TEXTURAS") {
 			text = 9;
 		}
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 280);
+		glVertex2i(220, 280);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 360);
+		glVertex2i(220, 360);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 360);
+		glVertex2i(420, 360);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 280);
+		glVertex2i(420, 280);
 		glEnd();
 
-		int text = 6;
+		if (texturas_on) {
+			text = 12;
+		}
+		else {
+			text = 13;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(470, 290);
+		glTexCoord2f(0, 1);
+		glVertex2i(470, 350);
+		glTexCoord2f(1, 1);
+		glVertex2i(530, 350);
+		glTexCoord2f(1, 0);
+		glVertex2i(530, 290);
+		glEnd();
+
+		text = 6;
 		if (selected == "WIREFRAME") {
 			text = 10;
 		}
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 180);
+		glVertex2i(220, 180);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 260);
+		glVertex2i(220, 260);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 260);
+		glVertex2i(420, 260);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 180);
+		glVertex2i(420, 180);
 		glEnd();
 
-		int text = 7;
-		if (selected == "VELOCIDAD") {
+		if (wireframe) {
+			text = 12;
+		}
+		else {
+			text = 13;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(470, 190);
+		glTexCoord2f(0, 1);
+		glVertex2i(470, 250);
+		glTexCoord2f(1, 1);
+		glVertex2i(530, 250);
+		glTexCoord2f(1, 0);
+		glVertex2i(530, 190);
+		glEnd();
+
+		text = 7;
+		if (selected == "FACETADO") {
 			text = 11;
 		}
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex2i(250, 380);
+		glVertex2i(220, 80);
 		glTexCoord2f(0, 1);
-		glVertex2i(250, 460);
+		glVertex2i(220, 160);
 		glTexCoord2f(1, 1);
-		glVertex2i(390, 460);
+		glVertex2i(420, 160);
 		glTexCoord2f(1, 0);
-		glVertex2i(390, 380);
+		glVertex2i(420, 80);
+		glEnd();
+
+		if (facetado) {
+			text = 12;
+		}
+		else {
+			text = 13;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(470, 90);
+		glTexCoord2f(0, 1);
+		glVertex2i(470, 150);
+		glTexCoord2f(1, 1);
+		glVertex2i(530, 150);
+		glTexCoord2f(1, 0);
+		glVertex2i(530, 90);
 		glEnd();
 	}
 
