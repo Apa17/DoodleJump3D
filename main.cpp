@@ -11,6 +11,9 @@
 using namespace std;
 using std::chrono::system_clock;
 
+
+
+
 system_clock::time_point starting_time, current_time, previous_time, current_pausa_time;
 //std::chrono::duration<double> delta_pausa_time, deltatime;
 GLfloat luz_posicion[4] = { 0, 0, 1, 1 };
@@ -28,14 +31,43 @@ GLuint* texturas_digitos;
 
 float degrees = 0;
 
-int w = 640;
-int h = 480;
+const double FPS = 60;
+const int w = 640;
+const int h = 480;
 Objeto3d* objetos3d;
+
+void pausa() {
+	bool paused = true;
+	while (true) {
+		while (SDL_PollEvent(&evento)) {
+			switch (evento.type) {
+			case SDL_KEYDOWN:
+				switch (evento.key.keysym.sym) {
+				case SDLK_q:
+					fin = true;
+					break;
+				case SDLK_p:
+					paused = false;
+					break;
+				}
+			}
+		}
+	}
+}
 
 
 void manejoEventos() {
 	while (SDL_PollEvent(&evento)) {
 		switch (evento.type) {
+		case SDL_KEYDOWN:
+			switch (evento.key.keysym.sym) {
+				case SDLK_q:
+					fin = true;
+					break;
+				case SDLK_p:
+					pausa();
+					break;
+			}
 		case SDL_MOUSEBUTTONDOWN:
 			rotation = true;
 			break;
@@ -214,44 +246,9 @@ void dibujar_plataforma(GLfloat x, GLfloat y) {
 }
 
 void dibujarObjetos() {
-	//DIBUJO TRIANGULO CON COLOR
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glBegin(GL_TRIANGLES);
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(1., -1., 0.);
-	glVertex3f(-1., -1., 0.);
-	glVertex3f(0., 1., 0.);
-	glEnd();
-	glPopMatrix();
-	glDisable(GL_LIGHTING);
-
-	//DIBUJO TRIANGULO CON TEXTURA
-	if (textOn) {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texturas[0]);
-	}
-	glBegin(GL_TRIANGLES);
-	glColor3f(1.0, 1.0, 1.0);
-	glTexCoord2f(0, 0);
-	glVertex3f(3., -1., 0.);
-	glTexCoord2f(0, 1);
-	glVertex3f(1., -1., 0.);
-	glTexCoord2f(1, 0);
-	glVertex3f(2., 1., 0.);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-
-	//DIBUJO TRIANGULO CON LUZ
-	glEnable(GL_LIGHTING);
-	glBegin(GL_TRIANGLES);
-	glNormal3f(0, 0, 1);
-	glVertex3f(-1., -1., 0.);
-	glVertex3f(-3., -1., 0.);
-	glVertex3f(-2., 1., 0.);
-	glEnd();	
-	objetos3d[0].draw(0, 0, -5, 1, 1, 0, colorLuz);
-	glDisable(GL_LIGHTING);
+	dibujar_plataforma(1, 0);
+	dibujar_plataforma(1, 1);
+	dibujar_plataforma(1, 2);
 }
 
 
@@ -423,6 +420,7 @@ int main(int argc, char *argv[]) {
 	rotation = false;
 	degrees = 0;
 	current_time = system_clock::now();
+	std::chrono::duration<double> delta_pausa_time, deltatime;
 
 	glMatrixMode(GL_PROJECTION);
 
@@ -442,6 +440,8 @@ int main(int argc, char *argv[]) {
 		
 		previous_time = current_time;
 		current_time = system_clock::now();
+		deltatime = (current_time - previous_time - delta_pausa_time);
+		delta_pausa_time -= delta_pausa_time;
 
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -467,16 +467,14 @@ int main(int argc, char *argv[]) {
 
 		//DIBUJAR 
 		draw_background();
+		
 		//TRANSFORMACIONES LINEALES
 		if (rotation) {
 			degrees = degrees + 1;
 		}
 		glRotatef(degrees, 0.0, 1.0, 0.0);
-		//dibujarObjetos();
 		glEnable(GL_LIGHTING);
-		dibujar_plataforma(1, 0);
-		dibujar_plataforma(1, 1);
-		dibujar_plataforma(1, 2);
+		dibujarObjetos();
 		drawHud();
 		
 
@@ -484,6 +482,8 @@ int main(int argc, char *argv[]) {
 
 		//MANEJO DE EVENTOS
 		manejoEventos();
+		if ((1000.0 / FPS) > deltatime.count())
+			SDL_Delay((1000.0 / FPS) - deltatime.count());
 		//FIN MANEJO DE EVENTOS
 		SDL_GL_SwapWindow(win);
 	} while (!fin);
