@@ -7,6 +7,7 @@
 #include <GL/glu.h>
 #include "game_hud.cpp"
 #include "mesh.h"
+#include <time.h>
 
 using namespace std;
 using std::chrono::system_clock;
@@ -15,13 +16,42 @@ using std::chrono::system_clock;
 
 
 system_clock::time_point starting_time, current_time, previous_time, current_pausa_time;
+
+// variables de estado
 //std::chrono::duration<double> delta_pausa_time, deltatime;
 GLfloat luz_posicion[4] = { 0, 0, 1, 1 };
 GLfloat luz_posicion1[4] = { 0, 0, -1, 1 };
 GLfloat colorLuz[4] = { 1, 1, 1, 1 };
 bool textOn;
 bool fin;
+enum Mode {
+	MAIN_MENU,
+	IN_GAME,
+	NIVELES_MODE,
+	SETTINGS_MODE
+};
 
+enum Selected_MAIN_MENU {
+	NIVELES,
+	SETTINGS,
+};
+
+enum Selected_NIVELES {
+	UNO,
+	DOS,
+};
+
+enum Selected_SETTINGS{
+	VELOCIDAD,
+	TEXTURAS,
+	WIREFRAME,
+	FACETADO
+};
+
+Mode mode = MAIN_MENU;
+Selected_MAIN_MENU selected_MAIN_MENU = NIVELES;
+Selected_NIVELES selected_NIVELES = UNO;
+Selected_SETTINGS selected_SETTINGS = VELOCIDAD;
 
 SDL_Event evento;
 
@@ -31,6 +61,7 @@ float posx = 0, posy = 0;
 float posyWorld = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
+GLuint* texturas_menu;
 
 const double velocidadInicialX = 5;
 const double velocidadInicialY = 3;
@@ -51,7 +82,6 @@ struct Plataforma {
 	int x;
 	float tamaño;
 };
-
 vector<Plataforma> plataformas;
 
 const int max_plataformas = 7;
@@ -120,8 +150,6 @@ void manejoEventos() {
 				break;
 			case SDL_KEYUP:
 				switch (evento.key.keysym.sym) {
-					case SDLK_RETURN:
-						break;
 					case SDLK_ESCAPE:
 						fin = true;
 						break;
@@ -134,11 +162,32 @@ void manejoEventos() {
 					case SDLK_p:
 						pausa();
 						break;
+					case SDLK_RETURN:
+						if (mode == MAIN_MENU) {
+							if (selected_MAIN_MENU == NIVELES) {
+								mode = IN_GAME;
+							}
+							if (selected_MAIN_MENU == SETTINGS) {
+								mode = SETTINGS_MODE;
+								selected_SETTINGS = VELOCIDAD;
+							}
+						}
+						break;
 					case SDLK_DOWN:
-						falling = !falling;
+						if (mode == MAIN_MENU) {
+							selected_MAIN_MENU = SETTINGS;
+						}
+						if (mode == IN_GAME) {
+							falling = !falling;
+						}
 						break;
 					case SDLK_UP:
-						jumping = !jumping;
+						if (mode == MAIN_MENU) {
+							selected_MAIN_MENU = NIVELES;
+						}
+						if(mode== IN_GAME){
+							jumping = !jumping;
+						}
 						break;
 					
 			}
@@ -164,12 +213,15 @@ void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 }
 
 void cargarTexturas() {
-	texturas = new GLuint[4];
-	glGenTextures(4, texturas);
+	texturas = new GLuint[5];
+	glGenTextures(5, texturas);
 	cout << texturas << endl;
 
 	texturas_digitos = new GLuint[11];
 	glGenTextures(11, texturas_digitos);
+
+	texturas_menu = new GLuint[14];
+	glGenTextures(4, texturas_menu);
 
 	//archivos
 	char archivo[] = "../canon.png";
@@ -183,6 +235,10 @@ void cargarTexturas() {
 
 	char archivo4[] = "../fondo.jpg";
 	cargarTextura(archivo4, 3, texturas);
+
+	char archivo5[] = "../marron.jpg";
+	cargarTextura(archivo5, 4, texturas);
+
 
 	// Cargo texturas de numeros
 	char archivo_temp[] = "../0.png";
@@ -218,6 +274,45 @@ void cargarTexturas() {
 
 	char archivo_punto[] = "../punto.png";
 	cargarTextura(archivo_punto, 10, texturas_digitos);
+
+
+	// Cargar texturas menus
+	char niveles[] = "../niveles.png";
+	cargarTextura(niveles, 0, texturas_menu);
+
+	char settings[] = "../settings.png";
+	cargarTextura(settings, 1, texturas_menu);
+
+	// Cargar texturas menus
+	char niveles_s[] = "../niveles_selected.png";
+	cargarTextura(niveles_s, 2, texturas_menu);
+
+	char settings_s[] = "../settings_selected.png";
+	cargarTextura(settings_s, 3, texturas_menu);
+
+	char velocidad[] = "../velocidad.png";
+	cargarTextura(velocidad, 4, texturas_menu);
+
+	char textures[] = "../texturas.png";
+	cargarTextura(textures, 5, texturas_menu);
+
+	char wireframe[] = "../wireframe.png";
+	cargarTextura(wireframe, 6, texturas_menu);
+
+	char facetado[] = "../facetado.png";
+	cargarTextura(facetado, 7, texturas_menu);
+
+	char velocidad_s[] = "../velocidad_selected.png";
+	cargarTextura(velocidad_s, 8, texturas_menu);
+
+	char textures_s[] = "../texturas_selected.png";
+	cargarTextura(textures_s, 9, texturas_menu);
+
+	char wireframe_s[] = "../wireframe_selected.png";
+	cargarTextura(wireframe_s, 10, texturas_menu);
+
+	char facetado_s[] = "../facetado_selected.png";
+	cargarTextura(facetado_s, 11, texturas_menu);
 
 	
 	//FIN CARGAR IMAGEN
@@ -266,34 +361,189 @@ void draw_background() {
 	glDisable(GL_LIGHTING);
 }
 
-void dibujar_plataforma(GLfloat x, GLfloat y) {
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(0.5f, 0.0f, 0.0f);
+void draw_menu(Mode menu) {
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+
+	//Guardamos contexto
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0, w, 0, h, -1, 1);
+
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	if (mode == MAIN_MENU)
+	{
+		//Dibujamos opciones
+		int text = 0;
+		if (selected_MAIN_MENU == NIVELES) {
+			text = 2;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 250);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 330);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 330);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 250);
+		glEnd();
+
+		text = 1;
+		if (selected_MAIN_MENU == SETTINGS) {
+			text = 3;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 150);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 230);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 230);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 150);
+		glEnd();
+	}
+	else if(mode == SETTINGS) {
+
+		//Dibujamos opciones
+		int text = 4;
+		if (selected_SETTINGS == VELOCIDAD) {
+			text = 8;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 380);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 460);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 460);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 380);
+		glEnd();
+
+		text = 5;
+		if (selected_SETTINGS == TEXTURAS) {
+			text = 9;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 280);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 360);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 360);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 280);
+		glEnd();
+
+		text = 6;
+		if (selected_SETTINGS == WIREFRAME) {
+			text = 10;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 180);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 260);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 260);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 180);
+		glEnd();
+
+		text = 7;
+		if (selected_SETTINGS == VELOCIDAD) {
+			text = 11;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(250, 380);
+		glTexCoord2f(0, 1);
+		glVertex2i(250, 460);
+		glTexCoord2f(1, 1);
+		glVertex2i(390, 460);
+		glTexCoord2f(1, 0);
+		glVertex2i(390, 380);
+		glEnd();
+	}
+
+
+	//Recuperamos contexto
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+}
+
+void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
+
+	glBindTexture(GL_TEXTURE_2D, texturas[4]);
+	glEnable(GL_TEXTURE_2D);
 	glBegin(GL_QUAD_STRIP);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.f);
-	glVertex3f(x + 0.6f, y + 0.15f, 0.4f);
-	glVertex3f(x + 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y - 0.15f, 0.4f);
-	glVertex3f(x - 0.6f, y + 0.15f, 0.4f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x + 1.0f * tamaño/2, y - 0.15f, 0.f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glTexCoord2f(1, 0);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(1, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(1, 0);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glTexCoord2f(1, 0);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(1,0);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glTexCoord2f(1, 0);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(0, 0);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glTexCoord2f(0, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
 	glEnd();
 
 }
@@ -301,13 +551,13 @@ void dibujar_plataforma(GLfloat x, GLfloat y) {
 void dibujarObjetos() {
 	glPushMatrix();
 		glTranslatef(0, posyWorld, 0.0);
-		for(int i=0 ; i<300; i++)
-			dibujar_plataforma(i % 3, i);
+		//dibujar plataformas
 	glPopMatrix();
 	glPushMatrix();
 		glTranslatef(posx, posy, 0.0);
 		dibujar_doodle();
 	glPopMatrix();
+	
 }
 
 
@@ -380,7 +630,7 @@ void drawNumeros(int score, int min, int sec) {
 }
 
 void drawHud() {
-	//save state
+	// save state
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -392,10 +642,10 @@ void drawHud() {
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
-
+	glDisable(GL_TEXTURE_2D);
 	// Dibuja el HUD
 	glBegin(GL_QUADS);
-	glColor3f(255.0, 255.0, 255.0);
+	glColor3f(1, 1, 1);
 	glVertex2i(20, 20);
 	glVertex2i(180, 20);
 	glVertex2i(180, 80);
@@ -444,8 +694,6 @@ void drawHud() {
 	}
 
 
-
-
 	// Termina de dibujar
 	
 	//carga las matrices previas
@@ -454,6 +702,7 @@ void drawHud() {
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 }
@@ -555,11 +804,18 @@ int main(int argc, char *argv[]) {
 		re_inicicializacion();
 		
 		//DIBUJAR 
-		draw_background();
-		drawHud();
-		dibujarObjetos();
 		
+		if ((mode == MAIN_MENU) || (mode == SETTINGS)) {
+			draw_menu(mode);
+		}
 
+		if (mode == IN_GAME)
+		{
+			draw_background();
+			drawHud();
+			dibujarObjetos();
+		}
+		
 		//MANEJO DE EVENTOS
 		manejoEventos();
 		if ((1000.0 / FPS) > deltatime.count())
