@@ -8,6 +8,7 @@
 #include "game_hud.cpp"
 #include "mesh.h"
 #include <time.h>
+#include <queue>
 
 using namespace std;
 using std::chrono::system_clock;
@@ -19,20 +20,19 @@ system_clock::time_point starting_time, current_time, previous_time, current_pau
 
 // variables de estado
 //std::chrono::duration<double> delta_pausa_time, deltatime;
-GLfloat luz_posicion[4] = { 0, 0, 1, 1 };
-GLfloat luz_posicion1[4] = { 0, 0, -1, 1 };
-GLfloat colorLuz[4] = { 1, 1, 1, 1 };
-bool textOn;
+double total_time;
+int score = 0;
 bool fin;
 bool velocidad_rapida = false;
-bool texturas_on = true;
+bool textOn = true;
 bool wireframe = false;
 bool facetado = false;
 enum Mode {
 	MAIN_MENU,
 	IN_GAME,
 	NIVELES_MODE,
-	SETTINGS_MODE
+	SETTINGS_MODE,
+	PAUSA
 };
 
 enum Selected_MAIN_MENU {
@@ -52,20 +52,35 @@ enum Selected_SETTINGS{
 	FACETADO
 };
 
+enum Selected_MENU_PAUSA {
+	REANUDAR,
+	SETTINGS_PAUSA
+};
+
 Mode mode = MAIN_MENU;
+Mode prev_mode;
 Selected_MAIN_MENU selected_MAIN_MENU = NIVELES;
 Selected_NIVELES selected_NIVELES = UNO;
 Selected_SETTINGS selected_SETTINGS = VELOCIDAD;
+Selected_MENU_PAUSA selected_MENU_PAUSA = REANUDAR;
 
 SDL_Event evento;
 
 
 float x, y, z;
-float posx = 0, posy = 0;
+float posx = 0, posy = -1.4;
 float posyWorld = 0;
+float posyWorld_delta = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
+
+GLfloat luz_posicion[4] = { 0, 0, -7, 1 };
+GLfloat luz_posicion1[4] = { -5, -5, -5, 1 };
+GLfloat colorLuz[4] = { 1, 1, 1, 1 };
+GLfloat colorLuzDifusa[4] = { 1.8, 1.8, 1.8, 1.8 };
+GLfloat colorLuzSpecular[4] = { 1, 1, 1, 1 };
+GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
 
 const double velocidadInicialX = 5;
 const double velocidadInicialY = 3;
@@ -86,16 +101,19 @@ struct Plataforma {
 	int x;
 	float tamaño;
 };
-vector<Plataforma> plataformas;
+queue<Plataforma> plataformas;
 
 const int max_plataformas = 7;
 
 void dibujar_doodle() {
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1, 1, 0);
 	glPushMatrix();
 	glRotatef(90, 0.0, 1.0, 0.0); //lo pongo de frente
 	glScalef(0.2, 0.2, 0.2); //lo achico
 	objetos3d->draw(posx, posy, 0, 1.0, 1.0, 1.0, colorLuz);
 	glPopMatrix();
+	glEnable(GL_TEXTURE_2D);
 }
 
 void re_inicicializacion() {
@@ -103,14 +121,39 @@ void re_inicicializacion() {
 	glLoadIdentity();
 	gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0);
 
-	//PRENDO LA LUZ (SIEMPRE DESPUES DEL gluLookAt)
-	glEnable(GL_LIGHT0); // habilita la luz 0
-	glLightfv(GL_LIGHT0, GL_POSITION, luz_posicion);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
+	////PRENDO LA LUZ (SIEMPRE DESPUES DEL gluLookAt)
+	//glEnable(GL_LIGHT0); // habilita la luz 0
+	//glLightfv(GL_LIGHT0, GL_POSITION, luz_posicion);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
+	GLfloat ambiente[] = { 2.0f,2.0f,2.0f,2.0f };
 
 	glEnable(GL_LIGHT1); // habilita la luz 1
 	glLightfv(GL_LIGHT1, GL_POSITION, luz_posicion1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz);
+	//glLightfv(GL_LIGHT1, GL_AMBIENT, ambiente);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuzDifusa);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, colorLuzSpecular);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direccion_luz);
+	
+
+	//glEnable(GL_LIGHT2); // habilita la luz 1
+	//glLightfv(GL_LIGHT2, GL_POSITION, luz_posicion1);
+	//glLightfv(GL_LIGHT2, GL_DIFFUSE, colorLuz);
+}
+
+void inicializar_plataformas() {
+	// Inicializa plataformas y piso
+	Plataforma piso;
+	piso.x = 0.0f;
+	piso.tamaño = 6.5;
+	plataformas.push(piso);
+	int x_plat;
+	for (int i = 1; i < 7; i++) {
+		x_plat = (rand() % 5) - 2;
+		Plataforma plataforma1;
+		plataforma1.x = x_plat;
+		plataforma1.tamaño = 1.2f;
+		plataformas.push(plataforma1);
+	}
 }
 
 
@@ -137,7 +180,25 @@ void manejoEventos() {
 			case SDL_KEYUP:
 				switch (evento.key.keysym.sym) {
 					case SDLK_ESCAPE:
-						fin = true;
+						if (mode == SETTINGS_MODE) {
+							if (prev_mode == MAIN_MENU){
+								mode = MAIN_MENU;
+								prev_mode = SETTINGS_MODE;
+							}
+							else {
+								mode = PAUSA;
+								prev_mode = SETTINGS_MODE;
+							}
+						}
+						else if (mode == IN_GAME){
+							prev_mode = IN_GAME;
+							mode = PAUSA;
+							//pausa();
+						}
+						else if (mode == PAUSA) {
+							prev_mode = PAUSA;
+							mode = IN_GAME;
+						}
 						break;
 					case SDLK_l:
 						textOn = !textOn;
@@ -146,14 +207,18 @@ void manejoEventos() {
 						fin = true;
 						break;
 					case SDLK_p:
+						mode = PAUSA;
 						//pausa();
 						break;
 					case SDLK_RETURN:
 						if (mode == MAIN_MENU) {
 							if (selected_MAIN_MENU == NIVELES) {
+								inicializar_plataformas();
+								prev_mode = MAIN_MENU;
 								mode = IN_GAME;
 							}
 							else if (selected_MAIN_MENU == SETTINGS) {
+								prev_mode = MAIN_MENU;
 								mode = SETTINGS_MODE;
 								selected_SETTINGS = VELOCIDAD;
 							}
@@ -163,15 +228,25 @@ void manejoEventos() {
 								velocidad_rapida = !velocidad_rapida;
 							}
 							if (selected_SETTINGS == TEXTURAS) {
-								texturas_on = !texturas_on;
-								wireframe = (!texturas_on) && (wireframe);
+								textOn = !textOn;
+								wireframe = (!textOn) && (wireframe);
 							}
 							if (selected_SETTINGS == WIREFRAME) {
 								wireframe = !wireframe;
-								texturas_on = (!wireframe) && (texturas_on);
+								textOn = (!wireframe) && (textOn);
 							}
 							if (selected_SETTINGS == FACETADO) {
 								facetado = !facetado;
+							}
+						}
+						else if (mode == PAUSA) {
+							if (selected_MENU_PAUSA == REANUDAR) {
+								prev_mode = PAUSA;
+								mode = IN_GAME;
+							}
+							if (selected_MENU_PAUSA == SETTINGS_PAUSA) {
+								prev_mode = PAUSA;
+								mode = SETTINGS_MODE;
 							}
 						}
 						break;
@@ -193,6 +268,9 @@ void manejoEventos() {
 								selected_SETTINGS = FACETADO;
 							}
 						}
+						else if (mode == PAUSA) {
+							selected_MENU_PAUSA = SETTINGS_PAUSA;
+						}
 						break;
 					case SDLK_UP:
 						if (mode == MAIN_MENU) {
@@ -211,6 +289,9 @@ void manejoEventos() {
 							else if (selected_SETTINGS == FACETADO) {
 								selected_SETTINGS = WIREFRAME;
 							}
+						}
+						else if (mode == PAUSA) {
+							selected_MENU_PAUSA = REANUDAR;
 						}
 						break;
 					
@@ -244,8 +325,8 @@ void cargarTexturas() {
 	texturas_digitos = new GLuint[11];
 	glGenTextures(11, texturas_digitos);
 
-	texturas_menu = new GLuint[14];
-	glGenTextures(4, texturas_menu);
+	texturas_menu = new GLuint[18];
+	glGenTextures(18, texturas_menu);
 
 	//archivos
 	char archivo[] = "../canon.png";
@@ -344,6 +425,18 @@ void cargarTexturas() {
 	char nocheck[] = "../nocheck.png";
 	cargarTextura(nocheck, 13, texturas_menu);
 
+	char reanudar[] = "../reanudar.png";
+	cargarTextura(reanudar, 14, texturas_menu);
+
+	char reanudar_s[] = "../reanudar_selected.png";
+	cargarTextura(reanudar_s, 15, texturas_menu);
+
+	char f[] = "../f.png";
+	cargarTextura(f, 16, texturas_menu);
+
+	char i[] = "../i.png";
+	cargarTextura(i, 17, texturas_menu);
+
 	
 	//FIN CARGAR IMAGEN
 
@@ -353,6 +446,7 @@ void cargarTexturas() {
 
 void draw_background() {
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texturas[3]);
@@ -389,9 +483,14 @@ void draw_background() {
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 }
 
 void draw_menu(Mode menu) {
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
@@ -428,6 +527,41 @@ void draw_menu(Mode menu) {
 
 		text = 1;
 		if (selected_MAIN_MENU == SETTINGS) {
+			text = 3;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(220, 150);
+		glTexCoord2f(0, 1);
+		glVertex2i(220, 230);
+		glTexCoord2f(1, 1);
+		glVertex2i(420, 230);
+		glTexCoord2f(1, 0);
+		glVertex2i(420, 150);
+		glEnd();
+	}
+	if (mode == PAUSA)
+	{
+		//Dibujamos opciones
+		int text = 14;
+		if (selected_MENU_PAUSA == REANUDAR) {
+			text = 15;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(220, 250);
+		glTexCoord2f(0, 1);
+		glVertex2i(220, 330);
+		glTexCoord2f(1, 1);
+		glVertex2i(420, 330);
+		glTexCoord2f(1, 0);
+		glVertex2i(420, 250);
+		glEnd();
+
+		text = 1;
+		if (selected_MENU_PAUSA == SETTINGS_PAUSA) {
 			text = 3;
 		}
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
@@ -496,7 +630,7 @@ void draw_menu(Mode menu) {
 		glVertex2i(420, 280);
 		glEnd();
 
-		if (texturas_on) {
+		if (textOn) {
 			text = 12;
 		}
 		else {
@@ -566,10 +700,10 @@ void draw_menu(Mode menu) {
 		glEnd();
 
 		if (facetado) {
-			text = 12;
+			text = 16;
 		}
 		else {
-			text = 13;
+			text = 17;
 		}
 		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
 		glBegin(GL_QUADS);
@@ -593,12 +727,15 @@ void draw_menu(Mode menu) {
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 }
 
 void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
 
-	glBindTexture(GL_TEXTURE_2D, texturas[4]);
 	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texturas[4]);
 	glBegin(GL_QUAD_STRIP);
 	glTexCoord2f(0, 0);
 	glVertex3f(x + 1.0f * tamaño/2, y - 0.15f, 0.f);
@@ -652,10 +789,34 @@ void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
 
 }
 
+void dibujar_plataformas() {
+	int y = -3;
+	for (int i = 0; i < 7; i++) {
+		Plataforma plat = plataformas.front();
+		plataformas.pop();
+		dibujar_plataforma(plat.x, y - floor(posyWorld), plat.tamaño);
+		plataformas.push(plat);
+		y++;
+	}
+}
+
+void actualizo_plataformas() {
+	if (posyWorld_delta > 1) {
+		posyWorld_delta -= 1;
+		plataformas.pop();
+		Plataforma plat;
+		plat.x = (rand() % 5) - 2;
+		plat.tamaño = 1.2f;
+		plataformas.push(plat);
+	}
+}
+
+
 void dibujarObjetos() {
+	glEnable(GL_LIGHTING);
 	glPushMatrix();
 		glTranslatef(0, posyWorld, 0.0);
-		//dibujar plataformas
+		dibujar_plataformas();
 	glPopMatrix();
 	glPushMatrix();
 		glTranslatef(posx, posy, 0.0);
@@ -663,6 +824,7 @@ void dibujarObjetos() {
 	glPopMatrix();
 	
 }
+
 
 
 
@@ -718,8 +880,10 @@ void drawNumeros(int score, int min, int sec) {
 
 	i = 0;
 	for (int n : digitos_min) {
-		drawNum(true, i, n);
-		i++;
+		if (!((i == 0) && (n == 0))) {
+			drawNum(true, i, n);
+			i++;
+		}
 	}
 
 	if (i > 0) {
@@ -734,6 +898,7 @@ void drawNumeros(int score, int min, int sec) {
 }
 
 void drawHud() {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	// save state
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -758,44 +923,39 @@ void drawHud() {
 
 
 	//enable textures if textOn
-	if (textOn) {
-		glEnable(GL_TEXTURE_2D);
 
-		// Dibuja score
-		glBindTexture(GL_TEXTURE_2D, texturas[1]);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
 
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f);
-		glVertex2i(30, 20);
-		glTexCoord2f(1.0f, 0.0f);
-		glVertex2i(80, 20);
-		glTexCoord2f(1.0f, 1.0f);
-		glVertex2i(80, 50);
-		glTexCoord2f(0.0f, 1.0f);
-		glVertex2i(30, 50);
-		glEnd();
+	// Dibuja score
+	glBindTexture(GL_TEXTURE_2D, texturas[1]);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-		// Dibuja time
-		glBindTexture(GL_TEXTURE_2D, texturas[2]);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2i(30, 20);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2i(80, 20);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2i(80, 50);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2i(30, 50);
+	glEnd();
 
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f);
-		glVertex2i(30, 50);
-		glTexCoord2f(1.0f, 0.0f);
-		glVertex2i(80, 50);
-		glTexCoord2f(1.0f, 1.0f);
-		glVertex2i(80, 76);
-		glTexCoord2f(0.0f, 1.0f);
-		glVertex2i(30, 76);
-		glEnd();
+	// Dibuja time
+	glBindTexture(GL_TEXTURE_2D, texturas[2]);
 
-		drawNumeros(10, 2, 55);
-	}
-	else {
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	}
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2i(30, 50);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2i(80, 50);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2i(80, 76);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2i(30, 76);
+	glEnd();
+
+	drawNumeros(score, (int)floor(total_time) / 60, (int)floor(total_time) % 60);
 
 
 	// Termina de dibujar
@@ -809,6 +969,9 @@ void drawHud() {
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 }
 
 void controlar_movimiento(std::chrono::duration<double> deltatime) {
@@ -816,7 +979,7 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 		velocidadY = velocidadY - aceleracionG * deltatime.count();
 		double incremento = (velocidadInicialY + velocidadY) * deltatime.count() - (1 / 2) * aceleracionG * deltatime.count() * deltatime.count();
 		posy += incremento;
-		cout << incremento << endl;
+		//cout << incremento << endl;
 		if (velocidadY < 0) {
 			falling = true;
 		}
@@ -827,7 +990,8 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 
 		}
 		else {
-			posyWorld -= deltatime.count() * 2;
+			posyWorld -= deltatime.count()*1.5;
+			posyWorld_delta += deltatime.count() * 1.5;
 		}
 	}
 	else {
@@ -841,22 +1005,6 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 	if (strifingRight) {
 		posx += velocidadX * deltatime.count();
 		strifingRight = false;
-	}
-}
-
-void inicializar_plataformas() {
-	// Inicializa plataformas y piso
-	Plataforma piso;
-	piso.x = 0.0f;
-	piso.tamaño = 6.5;
-	plataformas.push_back(piso);
-	int x_plat;
-	for (int i = 1; i < 7; i++) {
-		x_plat = (rand() % 5) - 2;
-		Plataforma plataforma1;
-		plataforma1.x = x_plat;
-		plataforma1.tamaño = 1.2f;
-		plataformas.push_back(plataforma1);
 	}
 }
 
@@ -880,9 +1028,8 @@ int main(int argc, char *argv[]) {
 	textOn = true;
 	fin = false;
 	current_time = system_clock::now();
-	std::chrono::duration<double> delta_pausa_time, deltatime;
-
-	inicializar_plataformas();
+	std::chrono::duration<double> delta_pausa_time, deltatime, deltatime_aux;
+	total_time = 0;
 
 	glMatrixMode(GL_PROJECTION);
 
@@ -899,24 +1046,45 @@ int main(int argc, char *argv[]) {
 	
 	//LOOP PRINCIPAL
 	do {
+		score = max(score, ((int)floor(posy)));
 
 		previous_time = current_time;
 		current_time = system_clock::now();
-		deltatime = (current_time - previous_time - delta_pausa_time);
-		delta_pausa_time -= delta_pausa_time;
-		controlar_movimiento(deltatime);
-		re_inicicializacion();
+		deltatime = (current_time - previous_time);
+		if (mode == IN_GAME) {
+			deltatime_aux = (current_time - previous_time);
+		}
+		else
+		{
+			deltatime_aux = (current_time - current_time);
+		}
+		total_time += deltatime_aux.count();
+		
 		
 		//DIBUJAR 
-		draw_background();
-		if ((mode == MAIN_MENU) || (mode == SETTINGS_MODE)) {
+		// Supuistamente son necesarias estas dos lineas para transparencia pero por ahora nada
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		if ((mode == MAIN_MENU) || (mode == SETTINGS_MODE) || (mode == PAUSA) || (mode == NIVELES_MODE)) {
+			draw_background();
 			draw_menu(mode);
 		}
 
 		if (mode == IN_GAME)
-		{
-			drawHud();
+		{	
+			if (wireframe) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+			else {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
+			controlar_movimiento(deltatime);
+			re_inicicializacion();
+			actualizo_plataformas();
+			draw_background();
 			dibujarObjetos();
+			drawHud();
 		}
 		
 		//MANEJO DE EVENTOS
