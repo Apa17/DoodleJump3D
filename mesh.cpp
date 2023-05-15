@@ -101,7 +101,6 @@ Objeto3d* cargarObjetos3d()
 		std::string currentDir(buffer);
 		std::string filePath = currentDir + "\\doodler.obj";
 		const char* filePathChar = filePath.c_str();
-		std::cout << "Current working directory: " << currentDir << std::endl;
 		a.load(filePath.c_str());
 		objetos3d[0] = a;
 		return objetos3d;
