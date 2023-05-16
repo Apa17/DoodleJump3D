@@ -27,6 +27,7 @@ bool velocidad_rapida = false;
 bool textOn = true;
 bool wireframe = false;
 bool facetado = false;
+int camara_mode = 0;
 enum Mode {
 	MAIN_MENU,
 	IN_GAME,
@@ -91,6 +92,10 @@ double velocidadY = velocidadInicialY;
 bool strifingRight = false;
 bool strifingLeft = false;
 
+float angulo_x = 180;
+float angulo_y = -13;
+float radio = -6;
+
 const double aceleracionG = 10;
 const double FPS = 60;
 const int w = 640;
@@ -99,6 +104,7 @@ Objeto3d* objetos3d;
 
 struct Plataforma {
 	int x;
+	float y;
 	float tamaño;
 };
 queue<Plataforma> plataformas;
@@ -144,6 +150,7 @@ void inicializar_plataformas() {
 	// Inicializa plataformas y piso
 	Plataforma piso;
 	piso.x = 0.0f;
+	piso.y = -2.0f;
 	piso.tamaño = 6.5;
 	plataformas.push(piso);
 	int x_plat;
@@ -151,18 +158,45 @@ void inicializar_plataformas() {
 		x_plat = (rand() % 5) - 2;
 		Plataforma plataforma1;
 		plataforma1.x = x_plat;
+		plataforma1.y = i*1.5 - 3;
 		plataforma1.tamaño = 1.2f;
 		plataformas.push(plataforma1);
 	}
 }
 
+void mover_camara() {
+	x = sin(angulo_x * M_PI / 180) * cos(angulo_y * M_PI / 180) * radio;
+	y = sin(angulo_y * M_PI / 180) * radio;
+	z = cos(angulo_x * M_PI / 180) * cos(angulo_y * M_PI / 180) * radio;
+}
 
 void manejoEventos() {
 	while (SDL_PollEvent(&evento)) {
 		switch (evento.type) {
-			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEWHEEL:
+				if (camara_mode == 2) {
+					if (evento.wheel.y > 0) // scroll up
+					{
+						if (radio < 0)
+							radio += .5;
+						mover_camara();
+					}
+					else if (evento.wheel.y < 0) // scroll down
+					{
+						radio -= .5;
+						mover_camara();
+					}
+				}
 				break;
-			case SDL_MOUSEBUTTONUP:
+			case SDL_MOUSEMOTION:
+				if (camara_mode == 2) {
+					if (evento.motion.yrel < 0 && angulo_y < 80)
+						angulo_y -= evento.motion.yrel * 0.4;
+					else if (evento.motion.yrel >= 0 && angulo_y > -80)
+						angulo_y -= evento.motion.yrel * 0.4;
+					angulo_x += evento.motion.xrel * 0.4;
+					mover_camara();
+				}
 				break;
 			case SDL_QUIT:
 				fin = true;
@@ -179,6 +213,26 @@ void manejoEventos() {
 				break;
 			case SDL_KEYUP:
 				switch (evento.key.keysym.sym) {
+					case SDLK_RIGHT:
+						strifingRight = false;
+						break;
+					case SDLK_LEFT:
+						strifingLeft = false;
+						break;
+					case SDLK_v:
+						camara_mode++;
+						camara_mode = camara_mode % 3;
+						if (camara_mode == 0) {
+							x = 0;
+							y = 0;
+							z = 7;
+						}
+						if (camara_mode == 1) {
+							x = 5;
+							y = 5;
+							z = 5;
+						}
+						break;
 					case SDLK_ESCAPE:
 						if (mode == SETTINGS_MODE) {
 							if (prev_mode == MAIN_MENU){
@@ -318,8 +372,8 @@ void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 }
 
 void cargarTexturas() {
-	texturas = new GLuint[5];
-	glGenTextures(5, texturas);
+	texturas = new GLuint[6];
+	glGenTextures(6, texturas);
 	cout << texturas << endl;
 
 	texturas_digitos = new GLuint[11];
@@ -343,6 +397,9 @@ void cargarTexturas() {
 
 	char archivo5[] = "../marron.jpg";
 	cargarTextura(archivo5, 4, texturas);
+
+	char j[] = "../rojo.png";
+	cargarTextura(j, 5, texturas);
 
 
 	// Cargo texturas de numeros
@@ -790,27 +847,26 @@ void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
 }
 
 void dibujar_plataformas() {
-	int y = -3;
-	for (int i = 0; i < 7; i++) {
+	int size = plataformas.size();
+	for (int i = 0; i < size; i++) {
 		Plataforma plat = plataformas.front();
-		plataformas.pop();
-		dibujar_plataforma(plat.x, y - floor(posyWorld), plat.tamaño);
+		plataformas.pop(); 
+		dibujar_plataforma(plat.x, plat.y, plat.tamaño); //y - floor(posyWorld)
 		plataformas.push(plat);
-		y++;
 	}
 }
 
 void actualizo_plataformas() {
-	if (posyWorld_delta > 1) {
-		posyWorld_delta -= 1;
+	Plataforma plat= plataformas.front();
+	if (plat.y < -posyWorld - 5) {
 		plataformas.pop();
 		Plataforma plat;
 		plat.x = (rand() % 5) - 2;
+		plat.y = -posyWorld + 4;
 		plat.tamaño = 1.2f;
 		plataformas.push(plat);
 	}
 }
-
 
 void dibujarObjetos() {
 	glEnable(GL_LIGHTING);
@@ -824,9 +880,6 @@ void dibujarObjetos() {
 	glPopMatrix();
 	
 }
-
-
-
 
 // Funcion que usamos para pasar numeros a lista de chars y dibujarlos luego.
 void collect_digits(std::vector<int>& digits, unsigned long num) {
@@ -974,6 +1027,10 @@ void drawHud() {
 	}
 }
 
+bool check_colision(Plataforma p) {
+	return false;
+}
+
 void controlar_movimiento(std::chrono::duration<double> deltatime) {
 	if (jumping) {
 		velocidadY = velocidadY - aceleracionG * deltatime.count();
@@ -987,12 +1044,38 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 			falling = false;
 		}
 		if (falling) {
-
-		}
-		else {
-			posyWorld -= deltatime.count()*1.5;
+			//check colisiones
+			for (int i = 0; i < plataformas.size(); i++) {
+				Plataforma plat = plataformas.front();
+				plataformas.pop();
+				bool xizq = plat.x - 1.0f * plat.tamaño / 2 < posx;
+				bool xder = posx < plat.x + 1.0f * plat.tamaño / 2;
+				bool yizq = posyWorld + plat.y + 0.05f < posy;
+				bool yder = posy < posyWorld + plat.y + 0.3f;
+				bool res = (xizq && xder) && (yizq && yder);
+				
+				if (res) {
+					/*cout << "i=" << i << endl;
+					cout << "posx=" << posx << endl;
+					cout << "posy=" << posy << endl;
+					cout << "plat.x=" << plat.x << endl;
+					cout << "plat.y=" << plat.y << endl;
+					cout << "plat.tamaño=" << plat.tamaño << endl;
+					cout << "posyWorld=" << posyWorld << endl;
+					cout << "plat.x - 1.0f * plat.tamaño / 2=" << plat.x - 1.0f * plat.tamaño / 2 << endl;
+					cout << "plat.x + 1.0f * plat.tamaño / 2=" << plat.x + 1.0f * plat.tamaño / 2 << endl;
+					cout << endl << endl << endl;*/
+					jumping = true;
+					velocidadY = velocidadInicialY;
+					falling = false;
+				}
+				plataformas.push(plat);
+			}
+		}/* else {
+			posyWorld -= deltatime.count() * 3;
 			posyWorld_delta += deltatime.count() * 1.5;
-		}
+		}*/
+		posyWorld -= deltatime.count() * 2;
 	}
 	else {
 		velocidadY = velocidadInicialY;
@@ -1000,11 +1083,14 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 	}
 	if (strifingLeft) {
 		posx -= velocidadX * deltatime.count();
-		strifingLeft = false;
 	}
 	if (strifingRight) {
 		posx += velocidadX * deltatime.count();
-		strifingRight = false;
+	}
+	if (-7 > posy){
+		for(int i = 0 ; i<1000; i++)
+			cout << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << "PERDISTE " << endl;
+		fin = true;//cambiar por end_game
 	}
 }
 
@@ -1079,11 +1165,12 @@ int main(int argc, char *argv[]) {
 			else {
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			}
-			controlar_movimiento(deltatime);
+			
 			re_inicicializacion();
 			actualizo_plataformas();
 			draw_background();
 			dibujarObjetos();
+			controlar_movimiento(deltatime);
 			drawHud();
 		}
 		
