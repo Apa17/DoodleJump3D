@@ -58,6 +58,7 @@ void Objeto3d::draw(const float& xobject, const float& yobject, const float& zob
 				ylocal = mesh.vertices[indicedevertice].yv;
 				zlocal = mesh.vertices[indicedevertice].zv;
 				//glColor3f(0 + i * 10, 55+i*10+j*5+k*15, 0);
+				glEnable(GL_COLOR_MATERIAL);
 				glColor3f(r * colorLuz[0], g * colorLuz[1], b * colorLuz[2]);
 				glNormal3f(mesh.vertices[indicedevertice].xn, mesh.vertices[indicedevertice].yn, mesh.vertices[indicedevertice].zn);
 				glVertex3f(xlocal + xobject, ylocal + yobject, zlocal + zobject);
