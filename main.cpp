@@ -98,17 +98,19 @@ GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
 
-GLfloat pos1[4] = {0.0, 3.0, -5.0, 1.0};
-GLfloat pos2[4] = {3.0, 0.0, -5.0, 1.0};
-GLfloat pos3[4] = {0.0, 0.0, 5.0, 1.0};
-GLfloat luz_posicion[4] = { 0.0, 3.0, -5.0, 1.0 };
-GLfloat luz_posicion1[4] = { 3.0, 0.0, -5.0, 1.0 };
-GLfloat colorLuz[4] = { 1, 1, 1, 1 };
-GLfloat colorLuz1[4] = { 1, 1, 1, 1 };
-GLfloat blanco[4] = { 1, 1, 1, 1 };
-GLfloat verde[4] = { 1, 0, 0, 1 };
-GLfloat azul[4] = { 0, 1, 0, 1 };
-GLfloat rojo[4] = { 0, 0, 1, 1 };
+GLfloat pos1[3] = {0.0, 1.0, 8.0};
+GLfloat pos2[3] = {1.0, 0.0, 8.0};
+GLfloat pos3[3] = {0.0, 0.0, 0.0};
+GLfloat luz_posicion[3] = { 0.0, 1.0, 8.0 };
+GLfloat luz_posicion1[3] = { 1.0, 0.0, 8.0 };
+GLfloat colorLuz[4] = { 1, 1, 1, 0.1 };
+GLfloat colorLuz1[4] = { 1, 1, 1, 0.1 };
+GLfloat blanco[4] = { 1, 1, 1, 0.1 };
+GLfloat verde[4] = { 0, 0.1, 0, 0.1 };
+GLfloat azul[4] = { 0, 0, 0.1, 0.1 };
+GLfloat rojo[4] = { 0.1, 0, 0, 0.1 };
+GLfloat ambiente[4] = {0.1, 0.1, 0.1, 1};
+GLfloat specular[4] = {0.5, 0.5, 0.5, 1};
 GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
 
 const double velocidadInicialX = 5;
@@ -147,11 +149,10 @@ bool equals_homogeneas(GLfloat a1[], GLfloat a2[]) {
 
 void dibujar_doodle() {
 	glDisable(GL_TEXTURE_2D);
-	glColor3f(1, 1, 0);
 	glPushMatrix();
+	glScalef(0.2, 0.2, 0.2);
 	glRotatef(90, 0.0, 1.0, 0.0); //lo pongo de frente
-	glScalef(0.2, 0.2, 0.2); //lo achico
-	objetos3d->draw(posx, posy, 0, 0, 1.0, 0, colorLuz);
+	objetos3d->draw(posx, posy, 0, 1, 1.0, 1, colorLuz);
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
 }
@@ -161,25 +162,25 @@ void re_inicicializacion() {
 	glLoadIdentity();
 	gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0);
 
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	glEnable(GL_COLOR_MATERIAL);
+
 	////PRENDO LA LUZ (SIEMPRE DESPUES DEL gluLookAt)
 	glEnable(GL_LIGHT0); // habilita la luz 1
 	glLightfv(GL_LIGHT0, GL_POSITION, luz_posicion);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, colorLuz);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambiente);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, colorLuz);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, direccion_luz);
 
 	glEnable(GL_LIGHT1); // habilita la luz 1
 	glLightfv(GL_LIGHT1, GL_POSITION, luz_posicion1);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, colorLuz1);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambiente);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz1);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, colorLuz1);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direccion_luz);
 	
 
-	//glEnable(GL_LIGHT2); // habilita la luz 1
-	//glLightfv(GL_LIGHT2, GL_POSITION, luz_posicion1);
-	//glLightfv(GL_LIGHT2, GL_DIFFUSE, colorLuz);
 }
 
 void inicializar_plataformas() {
@@ -1799,55 +1800,97 @@ void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
 	else {
 		glDisable(GL_TEXTURE_2D);
 	}
-	glBegin(GL_QUAD_STRIP);
+	glBegin(GL_QUADS);
+
+	// Cara de derecha
+
 	glTexCoord2f(0, 0);
-	glVertex3f(x + 1.0f * tamaño/2, y - 0.15f, 0.f);
+	glNormal3f(1/3, -1/3, -1/3);
+	glVertex3f(x + 1.0f * tamaño/2, y - 0.15f, 0.f); //Derecha abajo atras
 	glTexCoord2f(0, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(1 / 3, -1 / 3, 1 / 3);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); //Derecha abajo adelante
 	glTexCoord2f(1, 1);
+	glNormal3f(1 / 3, 1 / 3, 1 / 3); //Derecha arriba adelante 
 	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
 	glTexCoord2f(1, 0);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glNormal3f(1 / 3, 1 / 3, -1 / 3);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // Deerecha arriba atras
+
+	// Cara de izquierda
+
 	glTexCoord2f(1, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glNormal3f(-1, 1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); // Izquierda arriba atras
 	glTexCoord2f(1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glNormal3f(-1, 1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // Izquierda arriba adelante
 	glTexCoord2f(0, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(-1, -1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // Izquierda abajo adelante
 	glTexCoord2f(0, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glNormal3f(-1, -1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); // Izquierda abajo atras
+
+	// Cara de abajo
+
 	glTexCoord2f(1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(1, -1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); // Derecha abajo adelante
 	glTexCoord2f(1, 0);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f);
-	glTexCoord2f(0, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(1, -1, -1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f); // Derecha abajo atras
 	glTexCoord2f(0, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glNormal3f(-1, -1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); // izquierda abajo atras
+	glTexCoord2f(0, 1);
+	glNormal3f(-1, -1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // izquierda abajo adelante
+	
+	// Cara de arriba
+	
 	glTexCoord2f(1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glNormal3f(1, 1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f); // deerecha arriba adelante
 	glTexCoord2f(1, 0);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
-	glTexCoord2f(0, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glNormal3f(1, 1, -1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // derecha arriba atras
 	glTexCoord2f(0, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glNormal3f(-1, 1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); // izquierda arriba atras
+	glTexCoord2f(0, 1);
+	glNormal3f(-1, 1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // izquierda arriba adelante
+
+	// Cara de atras
+
 	glTexCoord2f(1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glNormal3f(1, 1, -1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // derecha arriba atras
 	glTexCoord2f(1,0);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glNormal3f(1, -1, -1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f); //derecha abajo atras
 	glTexCoord2f(0, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f);
+	glNormal3f(-1, -1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); //izquierda abajo atras
 	glTexCoord2f(0, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f);
+	glNormal3f(-1, 1, -1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); //izquierda arriba atras
+
+	// Cara de adelante
+
 	glTexCoord2f(1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glNormal3f(1, 1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f); //derecha arriba adelante
 	glTexCoord2f(1, 0);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(1, -1, 1);
+	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); //derecha abajo adelante
 	glTexCoord2f(0, 0);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f);
+	glNormal3f(-1, -1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // izquierda abajo adelante
 	glTexCoord2f(0, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glNormal3f(-1, 1, 1);
+	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // izquierda arriba adelante
 	glEnd();
 
 }
@@ -1877,7 +1920,7 @@ void actualizo_plataformas() {
 void dibujarObjetos() {
 	glEnable(GL_LIGHTING);
 	glPushMatrix();
-		glTranslatef(0, posyWorld, 0.0);
+		glTranslatef(0, posyWorld, -0.2);
 		dibujar_plataformas();
 	glPopMatrix();
 	glPushMatrix();
@@ -2081,7 +2124,7 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 			posyWorld -= deltatime.count() * 3;
 			posyWorld_delta += deltatime.count() * 1.5;
 		}*/
-		posyWorld -= (deltatime.count() * (2 + ((min(posy, 7.0f) + 7) / 10))) * velocidad_multiplicador;
+		posyWorld -= (deltatime.count() * (2 + ((posy + 7) / 10))) * velocidad_multiplicador;
 	}
 	else {
 		velocidadY = velocidadInicialY*velocidad_multiplicador;

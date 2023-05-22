@@ -60,7 +60,7 @@ void Objeto3d::draw(const float& xobject, const float& yobject, const float& zob
 				//glColor3f(0 + i * 10, 55+i*10+j*5+k*15, 0);
 				glEnable(GL_COLOR_MATERIAL);
 				glColor3f(r * colorLuz[0], g * colorLuz[1], b * colorLuz[2]);
-				glNormal3f(mesh.vertices[indicedevertice].xn, mesh.vertices[indicedevertice].yn, mesh.vertices[indicedevertice].zn);
+				glNormal3f(-mesh.vertices[indicedevertice].xn, -mesh.vertices[indicedevertice].yn, -mesh.vertices[indicedevertice].zn);
 				glVertex3f(xlocal + xobject, ylocal + yobject, zlocal + zobject);
 			}
 		}
@@ -101,6 +101,7 @@ Objeto3d* cargarObjetos3d()
 	if (GetCurrentDirectoryA(MAX_PATH, buffer) != 0) {
 		std::string currentDir(buffer);
 		std::string filePath = currentDir + "\\doodler.obj";
+		cout << filePath;
 		const char* filePathChar = filePath.c_str();
 		a.load(filePath.c_str());
 		objetos3d[0] = a;
