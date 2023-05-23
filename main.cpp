@@ -83,6 +83,7 @@ Mode mode = MAIN_MENU;
 Mode prev_mode;
 Selected_MAIN_MENU selected_MAIN_MENU = NIVELES;
 Selected_NIVELES selected_NIVELES = UNO;
+Selected_NIVELES active_level = UNO;
 Selected_SETTINGS selected_SETTINGS = VELOCIDAD;
 Selected_MENU_PAUSA selected_MENU_PAUSA = REANUDAR;
 MENU_LUCES_SELECTED selected_LUCES = LUZ1_POS1;
@@ -97,19 +98,19 @@ float posyWorld_delta = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
-
+float tamaños[3] = { 0.6, 1.2, 0.9 };
 GLfloat pos1[3] = {0.0, 1.0, 8.0};
 GLfloat pos2[3] = {1.0, 0.0, 8.0};
 GLfloat pos3[3] = {0.0, 0.0, 0.0};
-GLfloat luz_posicion[3] = { 0.0, 1.0, 8.0 };
-GLfloat luz_posicion1[3] = { 1.0, 0.0, 8.0 };
+GLfloat luz_posicion[3];
+GLfloat luz_posicion1[3];
 GLfloat colorLuz[4] = { 1, 1, 1, 0.1 };
 GLfloat colorLuz1[4] = { 1, 1, 1, 0.1 };
 GLfloat blanco[4] = { 1, 1, 1, 0.1 };
 GLfloat verde[4] = { 0, 0.1, 0, 0.1 };
 GLfloat azul[4] = { 0, 0, 0.1, 0.1 };
 GLfloat rojo[4] = { 0.1, 0, 0, 0.1 };
-GLfloat ambiente[4] = {0.1, 0.1, 0.1, 1};
+GLfloat ambiente[4] = {0.3, 0.3, 0.3, 1};
 GLfloat specular[4] = {0.5, 0.5, 0.5, 1};
 GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
 
@@ -141,10 +142,10 @@ queue<Plataforma> plataformas;
 
 bool equals_homogeneas(GLfloat a1[], GLfloat a2[]) {
 	int i = 0;
-	while ((i < 4) && (a1[i] == a2[i])) {
+	while ((i < 3) && (a1[i] == a2[i])) {
 		i++;
 	}
-	return i == 4;
+	return i == 3;
 }
 
 void dibujar_doodle() {
@@ -152,7 +153,7 @@ void dibujar_doodle() {
 	glPushMatrix();
 	glScalef(0.2, 0.2, 0.2);
 	glRotatef(90, 0.0, 1.0, 0.0); //lo pongo de frente
-	objetos3d->draw(posx, posy, 0, 1, 1.0, 1, colorLuz);
+	objetos3d->draw(posx, posy, 0, 0.1, 0.5, 0.1, colorLuz);
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
 }
@@ -179,8 +180,6 @@ void re_inicicializacion() {
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz1);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direccion_luz);
-	
-
 }
 
 void inicializar_plataformas() {
@@ -195,8 +194,15 @@ void inicializar_plataformas() {
 		x_plat = (rand() % 5) - 2;
 		Plataforma plataforma1;
 		plataforma1.x = x_plat;
-		plataforma1.y = i*1.5 - 2;
-		plataforma1.tamaño = 1.2f;
+		plataforma1.y = i * 1.5 - 2;
+		if (active_level == UNO) {
+			plataforma1.tamaño = tamaños[1];
+		}
+		else {
+			int tam = rand() % 3;
+			cout << tam;
+			plataforma1.tamaño = tamaños[tam];
+		}
 		plataformas.push(plataforma1);
 	}
 }
@@ -311,7 +317,7 @@ void manejoEventos() {
 								selected_LUCES = LUZ2_POS1;
 								break;
 							case LUZ1_POS3:
-								selected_LUCES = LUZ1_POS3;
+								selected_LUCES = LUZ1_POS2;
 								break;
 							case LUZ2_POS3:
 								selected_LUCES = LUZ2_POS2;
@@ -373,6 +379,8 @@ void manejoEventos() {
 						}
 						else if (mode == GAME_OVER) {
 							mode = MAIN_MENU;
+							total_time = 0;
+							score = 0;
 						}
 						else if (mode == LUCES_MODE) {
 							mode = SETTINGS_MODE;
@@ -391,15 +399,28 @@ void manejoEventos() {
 					case SDLK_RETURN:
 						if (mode == MAIN_MENU) {
 							if (selected_MAIN_MENU == NIVELES) {
-								inicializar_plataformas();
 								prev_mode = MAIN_MENU;
-								mode = IN_GAME;
+								mode = NIVELES_MODE;
 							}
 							else if (selected_MAIN_MENU == SETTINGS) {
 								prev_mode = MAIN_MENU;
 								mode = SETTINGS_MODE;
 								selected_SETTINGS = VELOCIDAD;
 							}
+						}
+						else if (mode == NIVELES_MODE) {
+							if (selected_NIVELES == UNO) {
+								active_level = UNO;
+								prev_mode = NIVELES_MODE;
+								mode = IN_GAME;
+							}
+							else
+							{
+								active_level = DOS;
+								prev_mode = NIVELES_MODE;
+								mode = IN_GAME;
+							}
+							inicializar_plataformas();
 						}
 						else if (mode == SETTINGS_MODE) {
 							if (selected_SETTINGS == VELOCIDAD) {
@@ -438,36 +459,38 @@ void manejoEventos() {
 						}
 						else if (mode == GAME_OVER) {
 							mode = MAIN_MENU;
+							total_time = 0;
+							score = 0;
 						}
 						else if (mode == LUCES_MODE) {
 							switch (selected_LUCES) {
 							case LUZ1_POS1:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion[i] = pos1[i];
 								}
 								break;
 							case LUZ2_POS1:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion1[i] = pos1[i];
 								}
 								break;
 							case LUZ1_POS2:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion[i] = pos2[i];
 								}
 								break;
 							case LUZ2_POS2:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion1[i] = pos2[i];
 								}
 								break;
 							case LUZ1_POS3:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion[i] = pos3[i];
 								}
 								break;
 							case LUZ2_POS3:
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 3; i++) {
 									luz_posicion1[i] = pos3[i];
 								}
 								break;
@@ -517,6 +540,9 @@ void manejoEventos() {
 					case SDLK_DOWN:
 						if (mode == MAIN_MENU) {
 							selected_MAIN_MENU = SETTINGS;
+						}
+						else if (mode == NIVELES_MODE) {
+							selected_NIVELES = DOS;
 						}
 						else if (mode == IN_GAME) {
 							falling = !falling;
@@ -584,6 +610,9 @@ void manejoEventos() {
 					case SDLK_UP:
 						if (mode == MAIN_MENU) {
 							selected_MAIN_MENU = NIVELES;
+						}
+						else if (mode == NIVELES_MODE) {
+							selected_NIVELES = UNO;
 						}
 						else if(mode== IN_GAME){
 							jumping = !jumping;
@@ -673,15 +702,15 @@ void cargarTextura(char archivo[], int i, GLuint* texturas_array) {
 }
 
 void cargarTexturas() {
-	texturas = new GLuint[6];
-	glGenTextures(6, texturas);
+	texturas = new GLuint[8];
+	glGenTextures(8, texturas);
 	cout << texturas << endl;
 
 	texturas_digitos = new GLuint[11];
 	glGenTextures(11, texturas_digitos);
 
-	texturas_menu = new GLuint[30];
-	glGenTextures(30, texturas_menu);
+	texturas_menu = new GLuint[34];
+	glGenTextures(34, texturas_menu);
 
 	//archivos
 	char archivo[] = "../canon.png";
@@ -701,6 +730,12 @@ void cargarTexturas() {
 
 	char j[] = "../rojo.png";
 	cargarTextura(j, 5, texturas);
+
+	char fondo_jungla[] = "../fondo_jungla.jpg";
+	cargarTextura(fondo_jungla, 6, texturas);
+
+	char grass[] = "../grass.jpg";
+	cargarTextura(grass, 7, texturas);
 
 
 	// Cargo texturas de numeros
@@ -831,6 +866,18 @@ void cargarTexturas() {
 	char flecha[] = "../flecha.png";
 	cargarTextura(flecha, 29, texturas_menu);
 
+	char clasico[] = "../clasico.png";
+	cargarTextura(clasico, 30, texturas_menu);
+
+	char clasico_s[] = "../clasico_selected.png";
+	cargarTextura(clasico_s, 31, texturas_menu);
+
+	char jungla[] = "../jungla.png";
+	cargarTextura(jungla, 32, texturas_menu);
+
+	char jungla_s[] = "../jungla_selected.png";
+	cargarTextura(jungla_s, 33, texturas_menu);
+
 	
 	//FIN CARGAR IMAGEN
 
@@ -856,15 +903,21 @@ void draw_background() {
 
 	if (textOn) {
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texturas[3]);
+		if ((active_level == DOS) && (mode == IN_GAME)) {
+			glBindTexture(GL_TEXTURE_2D, texturas[6]);
+		}
+		else
+		{
+			glBindTexture(GL_TEXTURE_2D, texturas[3]);
+		}
 		glBegin(GL_QUADS);
-		glTexCoord2f(0, 0);
+		glTexCoord2f(-1, -1);
 		glVertex2f(-w, -h);
-		glTexCoord2f(1, 0);
+		glTexCoord2f(1, -1);
 		glVertex2f(w, -h);
 		glTexCoord2f(1, 1);
 		glVertex2f(w, h);
-		glTexCoord2f(0, 1);
+		glTexCoord2f(-1, 1);
 		glVertex2f(-w, h);
 		glEnd();
 	}
@@ -1776,6 +1829,40 @@ void draw_menu(Mode menu) {
 
 
 	}
+	else if(mode == NIVELES_MODE) {
+		//Dibujamos opciones
+		int text = 30;
+		if (selected_NIVELES == UNO) {
+			text = 31;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(220, 250);
+		glTexCoord2f(0, 1);
+		glVertex2i(220, 330);
+		glTexCoord2f(1, 1);
+		glVertex2i(420, 330);
+		glTexCoord2f(1, 0);
+		glVertex2i(420, 250);
+		glEnd();
+
+		text = 32;
+		if (selected_NIVELES == DOS) {
+			text = 33;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas_menu[text]);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex2i(220, 150);
+		glTexCoord2f(0, 1);
+		glVertex2i(220, 230);
+		glTexCoord2f(1, 1);
+		glVertex2i(420, 230);
+		glTexCoord2f(1, 0);
+		glVertex2i(420, 150);
+		glEnd();
+	}
 
 
 	//Recuperamos contexto
@@ -1791,11 +1878,14 @@ void draw_menu(Mode menu) {
 	}
 }
 
-void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
+void dibujar_plataforma(GLfloat x, GLfloat y, float tamaño) {
 	if (textOn) {
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texturas[4]);
-
+		int text = 7;
+		if (active_level == UNO) {
+			text = 4;
+		}
+		glBindTexture(GL_TEXTURE_2D, texturas[text]);
 	}
 	else {
 		glDisable(GL_TEXTURE_2D);
@@ -1806,91 +1896,91 @@ void dibujar_plataforma(GLfloat x, GLfloat y, int tamaño) {
 
 	glTexCoord2f(0, 0);
 	glNormal3f(1/3, -1/3, -1/3);
-	glVertex3f(x + 1.0f * tamaño/2, y - 0.15f, 0.f); //Derecha abajo atras
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.f); //Derecha abajo atras
 	glTexCoord2f(0, 1);
 	glNormal3f(1 / 3, -1 / 3, 1 / 3);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); //Derecha abajo adelante
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.4f); //Derecha abajo adelante
 	glTexCoord2f(1, 1);
 	glNormal3f(1 / 3, 1 / 3, 1 / 3); //Derecha arriba adelante 
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f);
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.4f);
 	glTexCoord2f(1, 0);
 	glNormal3f(1 / 3, 1 / 3, -1 / 3);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // Deerecha arriba atras
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.f); // Deerecha arriba atras
 
 	// Cara de izquierda
 
 	glTexCoord2f(1, 0);
 	glNormal3f(-1, 1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); // Izquierda arriba atras
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.f); // Izquierda arriba atras
 	glTexCoord2f(1, 1);
 	glNormal3f(-1, 1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // Izquierda arriba adelante
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.4f); // Izquierda arriba adelante
 	glTexCoord2f(0, 1);
 	glNormal3f(-1, -1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // Izquierda abajo adelante
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.4f); // Izquierda abajo adelante
 	glTexCoord2f(0, 0);
 	glNormal3f(-1, -1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); // Izquierda abajo atras
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.f); // Izquierda abajo atras
 
 	// Cara de abajo
 
 	glTexCoord2f(1, 1);
 	glNormal3f(1, -1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); // Derecha abajo adelante
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.4f); // Derecha abajo adelante
 	glTexCoord2f(1, 0);
 	glNormal3f(1, -1, -1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f); // Derecha abajo atras
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.f); // Derecha abajo atras
 	glTexCoord2f(0, 0);
 	glNormal3f(-1, -1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); // izquierda abajo atras
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.f); // izquierda abajo atras
 	glTexCoord2f(0, 1);
 	glNormal3f(-1, -1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // izquierda abajo adelante
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.4f); // izquierda abajo adelante
 	
 	// Cara de arriba
 	
 	glTexCoord2f(1, 1);
 	glNormal3f(1, 1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f); // deerecha arriba adelante
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.4f); // deerecha arriba adelante
 	glTexCoord2f(1, 0);
 	glNormal3f(1, 1, -1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // derecha arriba atras
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.f); // derecha arriba atras
 	glTexCoord2f(0, 0);
 	glNormal3f(-1, 1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); // izquierda arriba atras
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.f); // izquierda arriba atras
 	glTexCoord2f(0, 1);
 	glNormal3f(-1, 1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // izquierda arriba adelante
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.4f); // izquierda arriba adelante
 
 	// Cara de atras
 
 	glTexCoord2f(1, 1);
 	glNormal3f(1, 1, -1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.f); // derecha arriba atras
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.f); // derecha arriba atras
 	glTexCoord2f(1,0);
 	glNormal3f(1, -1, -1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.f); //derecha abajo atras
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.f); //derecha abajo atras
 	glTexCoord2f(0, 0);
 	glNormal3f(-1, -1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.f); //izquierda abajo atras
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.f); //izquierda abajo atras
 	glTexCoord2f(0, 1);
 	glNormal3f(-1, 1, -1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.f); //izquierda arriba atras
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.f); //izquierda arriba atras
 
 	// Cara de adelante
 
 	glTexCoord2f(1, 1);
 	glNormal3f(1, 1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y + 0.15f, 0.4f); //derecha arriba adelante
+	glVertex3f(x + (tamaño / 2.0f), y + 0.15f, 0.4f); //derecha arriba adelante
 	glTexCoord2f(1, 0);
 	glNormal3f(1, -1, 1);
-	glVertex3f(x + 1.0f * tamaño / 2, y - 0.15f, 0.4f); //derecha abajo adelante
+	glVertex3f(x + (tamaño / 2.0f), y - 0.15f, 0.4f); //derecha abajo adelante
 	glTexCoord2f(0, 0);
 	glNormal3f(-1, -1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y - 0.15f, 0.4f); // izquierda abajo adelante
+	glVertex3f(x - (tamaño / 2.0f), y - 0.15f, 0.4f); // izquierda abajo adelante
 	glTexCoord2f(0, 1);
 	glNormal3f(-1, 1, 1);
-	glVertex3f(x - 1.0f * tamaño / 2, y + 0.15f, 0.4f); // izquierda arriba adelante
+	glVertex3f(x - (tamaño / 2.0f), y + 0.15f, 0.4f); // izquierda arriba adelante
 	glEnd();
 
 }
@@ -1912,7 +2002,13 @@ void actualizo_plataformas() {
 		Plataforma plat;
 		plat.x = (rand() % 5) - 2;
 		plat.y = plat_vieja.y + (1.5*15);
-		plat.tamaño = 1.2f;
+		if (active_level == UNO) {
+			plat.tamaño = tamaños[1];
+		}
+		else {
+			int tamaño = rand() % 3;
+			plat.tamaño = tamaños[tamaño];
+		}
 		plataformas.push(plat);
 	}
 }
@@ -2245,6 +2341,12 @@ int main(int argc, char *argv[]) {
 
 	objetos3d = cargarObjetos3d();
 	cargarTexturas();
+	for (int i = 0; i < 3; i++) {
+		luz_posicion1[i] = pos2[i];
+	}
+	for (int i = 0; i < 3; i++) {
+		luz_posicion[i] = pos1[i];
+	}
 	//FIN INICIALIZACION 
 	
 	//LOOP PRINCIPAL
