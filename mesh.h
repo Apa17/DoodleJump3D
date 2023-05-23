@@ -29,7 +29,7 @@ struct Mesh {
 struct Objeto3d {
 	std::vector<Mesh> meshes;
 	void load(const char* filename);
-	void draw(const float& xobject, const float& yobject, const float& zobject, const double& r, const double& g, const double& b, GLfloat colorLuz[4]); //render
+	void draw(const float& xobject, const float& yobject, const float& zobject, const double& r, const double& g, const double& b, GLfloat colorLuz[4], bool doodler = false); //render
 };
 
 Objeto3d* cargarObjetos3d();

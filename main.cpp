@@ -152,8 +152,7 @@ void dibujar_doodle() {
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glScalef(0.2, 0.2, 0.2);
-	glRotatef(90, 0.0, 1.0, 0.0); //lo pongo de frente
-	objetos3d->draw(posx, posy, 0, 0.1, 0.5, 0.1, colorLuz);
+	objetos3d->draw(posx, posy, 0, 0.1, 0.5, 0.1, colorLuz, true);
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
 }
