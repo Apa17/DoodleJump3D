@@ -92,16 +92,16 @@ SDL_Event evento;
 
 
 float x, y, z;
-float posx = 0, posy = -1.4;
+float posx = 0, posy = -1.4, posz=0;
 float posyWorld = 0;
 float posyWorld_delta = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
 float tamaños[3] = { 0.6, 1.2, 0.9 };
-GLfloat pos1[3] = {0.0, 1.0, 8.0};
-GLfloat pos2[3] = {1.0, 0.0, 8.0};
-GLfloat pos3[3] = {0.0, 0.0, 0.0};
+GLfloat pos1[3] = { 0.0, 1.0, 8.0 };
+GLfloat pos2[3] = { 1.0, 0.0, 8.0 };
+GLfloat pos3[3] = { 0.0, 0.0, 0.0 };
 GLfloat luz_posicion[3];
 GLfloat luz_posicion1[3];
 GLfloat colorLuz[4] = { 1, 1, 1, 0.1 };
@@ -110,18 +110,20 @@ GLfloat blanco[4] = { 1, 1, 1, 0.1 };
 GLfloat verde[4] = { 0, 0.1, 0, 0.1 };
 GLfloat azul[4] = { 0, 0, 0.1, 0.1 };
 GLfloat rojo[4] = { 0.1, 0, 0, 0.1 };
-GLfloat ambiente[4] = {0.3, 0.3, 0.3, 1};
+GLfloat ambiente[4] = {0.0, 0.0, 0.0, 1};
 GLfloat specular[4] = {0.5, 0.5, 0.5, 1};
-GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
+GLfloat direccion_luz[3] = { 0.0, 0.0, 1.0 };
 
 const double velocidadInicialX = 5;
 const double velocidadInicialY = 3;
-bool jumping = false;
+bool jumping = true;
 bool falling = false;
 double velocidadX = velocidadInicialX;
 double velocidadY = velocidadInicialY;
 bool strifingRight = false;
 bool strifingLeft = false;
+bool strifingForward = false;
+bool strifingBackwards = false;
 
 float angulo_x = 180;
 float angulo_y = -13;
@@ -152,7 +154,110 @@ void dibujar_doodle() {
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glScalef(0.2, 0.2, 0.2);
-	objetos3d->draw(posx, posy, 0, 0.1, 0.5, 0.1, colorLuz, true);
+	//objetos3d->draw(posx, posy, 0, 0.1, 0.5, 0.1, colorLuz, true);
+	float altura = 0.6;
+
+	//CARA ABAJO
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(0, -1, 0);
+	glVertex3f(0.0, 0.0, -altura / 2);//vertex1
+	glTexCoord2d(1, 0);
+	glNormal3f(0, -1, 0);
+	glVertex3f(altura, 0.0, -altura / 2);//vertex2
+	glTexCoord2d(1, 1);
+	glNormal3f(0, -1, 0);
+	glVertex3f(altura, 0.0, altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(0, -1, 0);
+	glVertex3f(0.0, 0.0, altura / 2);//vertex4
+	glEnd();
+
+
+	//CARA ARRIBA
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(0, 1, 0);
+	glVertex3f(0.0, altura, -altura / 2);//vertex1 
+	glTexCoord2d(1, 0);
+	glNormal3f(0, 1, 0);
+	glVertex3f(altura, altura, -altura / 2);//vertex2 
+	glTexCoord2d(1, 1);
+	glNormal3f(0, 1, 0);
+	glVertex3f(altura, altura, altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(0, 1, 0);
+	glVertex3f(0.0, altura, altura / 2);//vertex4
+	glEnd();
+
+	//LATERAL IZQ
+
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(0, 0, -1);
+	glVertex3f(0.0, 0.0, -altura / 2);//vertex1
+	glTexCoord2d(1, 0);
+	glNormal3f(0, 0, -1);
+	glVertex3f(altura, 0.0, -altura / 2);//vertex2
+	glTexCoord2d(1, 1);
+	glNormal3f(0, 0, -1);
+	glVertex3f(altura, altura, -altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(0, 0, -1);
+	glVertex3f(0.0, altura, -altura / 2);//vertex4
+	glEnd();
+
+	//LATERAL DER
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(0, 0, 1);
+	glVertex3f(0.0, 0.0, altura / 2);//vertex1
+	glTexCoord2d(1, 0);
+	glNormal3f(0, 0, 1);
+	glVertex3f(altura, 0.0, altura / 2);//vertex2
+	glTexCoord2d(1, 1);
+	glNormal3f(0, 0, 1);
+	glVertex3f(altura, altura, altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(0, 0, 1);
+	glVertex3f(0.0, altura, altura / 2);//vertex4
+	glEnd();
+
+	//trasera
+
+	glColor3f(1.0, 1.0, 1.0);
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(-1, 0, 0);
+	glVertex3f(0.0, 0.0, -altura / 2);//vertex1
+	glTexCoord2d(1, 0);
+	glNormal3f(-1, 0, 0);
+	glVertex3f(0.0, 0.0, altura / 2);//vertex2
+	glTexCoord2d(1, 1);
+	glNormal3f(-1, 0, 0);
+	glVertex3f(0.0, altura, altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(-1, 0, 0);
+	glVertex3f(0.0, altura, -altura / 2);//vertex4
+	glEnd();
+
+	//frontal
+
+	glBegin(GL_POLYGON);
+	glTexCoord2d(0, 0);
+	glNormal3f(1, 0, 0);
+	glVertex3f(altura, 0.0, -altura / 2);//vertex1
+	glTexCoord2d(1, 0);
+	glNormal3f(1, 0, 0);
+	glVertex3f(altura, 0.0, altura / 2);//vertex2
+	glTexCoord2d(1, 1);
+	glNormal3f(1, 0, 0);
+	glVertex3f(altura, altura, altura / 2);//vertex3
+	glTexCoord2d(0, 1);
+	glNormal3f(1, 0, 0);
+	glVertex3f(altura, altura, -altura / 2);//vertex4
+	glEnd();
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
 }
@@ -171,14 +276,12 @@ void re_inicicializacion() {
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambiente);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, colorLuz);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, direccion_luz);
 
 	glEnable(GL_LIGHT1); // habilita la luz 1
 	glLightfv(GL_LIGHT1, GL_POSITION, luz_posicion1);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, ambiente);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, colorLuz1);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direccion_luz);
 }
 
 void inicializar_plataformas() {
@@ -205,7 +308,6 @@ void inicializar_plataformas() {
 		plataformas.push(plataforma1);
 	}
 }
-
 
 void mover_camara() {
 	x = sin(angulo_x * M_PI / 180) * cos(angulo_y * M_PI / 180) * radio;
@@ -251,6 +353,12 @@ void manejoEventos() {
 						break;
 					case SDLK_LEFT:
 						strifingLeft = true;
+						break;
+					case SDLK_l:
+						strifingBackwards = true;
+						break;
+					case SDLK_o:
+						strifingForward = true;
 						break;
 				}
 				break;
@@ -301,6 +409,13 @@ void manejoEventos() {
 							}
 						}
 						break;
+					case SDLK_o:
+						strifingForward = false;
+						break;
+					case SDLK_l:
+						strifingBackwards = false;
+						break;
+
 					case SDLK_LEFT:
 						strifingLeft = false;
 						if (mode == LUCES_MODE) {
@@ -385,7 +500,7 @@ void manejoEventos() {
 							mode = SETTINGS_MODE;
 						}
 						break;
-					case SDLK_l:
+					case SDLK_i:
 						textOn = !textOn;
 						break;
 					case SDLK_q:
@@ -2016,10 +2131,10 @@ void dibujarObjetos() {
 	glEnable(GL_LIGHTING);
 	glPushMatrix();
 		glTranslatef(0, posyWorld, -0.2);
-		dibujar_plataformas();
+		//dibujar_plataformas();
 	glPopMatrix();
 	glPushMatrix();
-		glTranslatef(posx, posy, 0.0);
+		glTranslatef(posx, posy, posz);
 		dibujar_doodle();
 	glPopMatrix();
 	
@@ -2231,6 +2346,12 @@ void controlar_movimiento(std::chrono::duration<double> deltatime) {
 	if (strifingRight) {
 		posx += velocidadX * deltatime.count();
 	}
+	if (strifingBackwards) {
+		posz += velocidadX * deltatime.count();
+	}
+	if (strifingForward) {
+		posz -= velocidadX * deltatime.count();
+	}
 	if (-7 > posy){
 		mode = GAME_OVER;
 	}
@@ -2340,6 +2461,15 @@ int main(int argc, char *argv[]) {
 
 	objetos3d = cargarObjetos3d();
 	cargarTexturas();
+	//pos1[0] = 0.0;
+	//pos1[1] = -1.4;
+	//pos1[2] = 1.0;
+	//pos2[0] = 0.0;
+	//pos2[1] = -1.4;
+	//pos2[2] = -1.0;
+	//pos3[0] = 0.0;
+	//pos3[1] = 0.0;
+	//pos3[2] = 0.0;
 	for (int i = 0; i < 3; i++) {
 		luz_posicion1[i] = pos2[i];
 	}
@@ -2350,6 +2480,8 @@ int main(int argc, char *argv[]) {
 	
 	//LOOP PRINCIPAL
 	do {
+		cout << luz_posicion[0] << " " << luz_posicion[1] << " " << luz_posicion[2] << " __ ";
+		cout << luz_posicion1[0] << " " << luz_posicion1[1] << " " << luz_posicion1[2] << " __ " << posx << " " << posy<< " " << posz << endl;
 		if (facetado) {
 			glShadeModel(GL_FLAT);
 		}
