@@ -43,10 +43,68 @@ vector<Mesh> processModel(const aiScene* scene) {
 	return newObject3d;
 }
 
-void Objeto3d::draw(const float& xobject, const float& yobject, const float& zobject, const double& r, const double& g, const double& b, GLfloat colorLuz[4]) {
+//void processNode(const aiNode* node, const aiScene* scene, const aiMatrix4x4& parentTransform, vector<Mesh>& meshes) {
+//	aiMatrix4x4 transform = parentTransform * node->mTransformation;
+//
+//	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+//		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+//		Mesh newMesh;
+//		vector<Face> faces;
+//
+//		for (unsigned int j = 0; j < mesh->mNumFaces; j++) {
+//			Face newFace;
+//			aiFace face = mesh->mFaces[j];
+//			newFace.numIndices = face.mNumIndices;
+//			int* indices = new int[face.mNumIndices];
+//
+//			for (int k = 0; k < face.mNumIndices; k++) {
+//				indices[k] = face.mIndices[k];
+//			}
+//
+//			newFace.indices = indices;
+//			faces.push_back(newFace);
+//		}
+//
+//		newMesh.faces = faces;
+//		Vertex* vertices = new Vertex[mesh->mNumVertices];
+//
+//		for (unsigned int l = 0; l < mesh->mNumVertices; l++) {
+//			Vertex v;
+//			v.xv = mesh->mVertices[l].x;
+//			v.yv = mesh->mVertices[l].y;
+//			v.zv = mesh->mVertices[l].z;
+//
+//			// Transform the normal vector
+//			aiVector3D normal = mesh->mNormals[l];
+//			aiVector3D transformedNormal = transform * normal;
+//			v.xn = transformedNormal.x;
+//			v.yn = transformedNormal.y;
+//			v.zn = transformedNormal.z;
+//
+//			vertices[l] = v;
+//		}
+//
+//		newMesh.vertices = vertices;
+//		meshes.push_back(newMesh);
+//	}
+//
+//	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+//		processNode(node->mChildren[i], scene, transform, meshes);
+//	}
+//}
+//
+//vector<Mesh> processModel(const aiScene* scene) {
+//	vector<Mesh> newObject3d;
+//	processNode(scene->mRootNode, scene, aiMatrix4x4(), newObject3d);
+//	return newObject3d;
+//}
+
+void Objeto3d::draw(const float& xobject, const float& yobject, const float& zobject, const double& r, const double& g, const double& b, GLfloat colorLuz[4], bool doodler) {
 	glBegin(GL_TRIANGLES);
+	int i = 0;
 	for (std::vector<Mesh>::iterator itm = meshes.begin(); itm != meshes.end(); ++itm) {
 		Mesh mesh = *itm;
+
 		for (std::vector<Face>::iterator itf = mesh.faces.begin(); itf != mesh.faces.end(); ++itf) {//por cada cara
 			Face face = *itf;
 			//glColor3f(0, 55, 0);	
@@ -58,12 +116,18 @@ void Objeto3d::draw(const float& xobject, const float& yobject, const float& zob
 				ylocal = mesh.vertices[indicedevertice].yv;
 				zlocal = mesh.vertices[indicedevertice].zv;
 				//glColor3f(0 + i * 10, 55+i*10+j*5+k*15, 0);
+				glEnable(GL_COLOR_MATERIAL);
 				glColor3f(r * colorLuz[0], g * colorLuz[1], b * colorLuz[2]);
-				glNormal3f(mesh.vertices[indicedevertice].xn, mesh.vertices[indicedevertice].yn, mesh.vertices[indicedevertice].zn);
+				if ((i == 5 || i == 6) && doodler) {
+					glNormal3f(-mesh.vertices[indicedevertice].xn, -mesh.vertices[indicedevertice].yn, -mesh.vertices[indicedevertice].zn);
+				}
+				else {
+					glNormal3f(mesh.vertices[indicedevertice].xn, mesh.vertices[indicedevertice].yn, mesh.vertices[indicedevertice].zn);
+				}				
 				glVertex3f(xlocal + xobject, ylocal + yobject, zlocal + zobject);
 			}
 		}
-		//dibujar mVertice[indice]
+		i++;
 	}
 	glColor3f(1.0, 1.0, 1.0); //Resetear el color
 	glEnd();
@@ -80,7 +144,7 @@ void Objeto3d::load(const char* pFile) { // eq loadmodel
 	// Usually - if speed is not the most important aspect for you - you'll
 	// probably to request more postprocessing than we do in this example.
 	scene = importer.ReadFile(pFile,
-		aiProcess_Triangulate | aiProcess_GenNormals);
+		aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_ConvertToLeftHanded | aiProcess_JoinIdenticalVertices);
 
 	// If the import failed, report it
 	if (nullptr == scene) {
@@ -100,6 +164,7 @@ Objeto3d* cargarObjetos3d()
 	if (GetCurrentDirectoryA(MAX_PATH, buffer) != 0) {
 		std::string currentDir(buffer);
 		std::string filePath = currentDir + "\\doodler.obj";
+		cout << filePath;
 		const char* filePathChar = filePath.c_str();
 		a.load(filePath.c_str());
 		objetos3d[0] = a;
