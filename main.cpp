@@ -99,11 +99,11 @@ GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
 float tamaños[3] = { 0.6, 1.2, 0.9 };
-GLfloat pos1[3] = {0.0, 1.0, 8.0};
-GLfloat pos2[3] = {1.0, 0.0, 8.0};
-GLfloat pos3[3] = {0.0, 0.0, 0.0};
-GLfloat luz_posicion[3];
-GLfloat luz_posicion1[3];
+GLfloat pos1[4] = {0.0f, 1.0f, 8.0f, 0.0f};
+GLfloat pos2[4] = {1.0f, 0.0f, 8.0f, 0.0f};
+GLfloat pos3[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+GLfloat luz_posicion[4];
+GLfloat luz_posicion1[4];
 GLfloat colorLuz[4] = { 1, 1, 1, 0.1 };
 GLfloat colorLuz1[4] = { 1, 1, 1, 0.1 };
 GLfloat blanco[4] = { 1, 1, 1, 0.1 };
@@ -116,7 +116,7 @@ GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
 
 const double velocidadInicialX = 5;
 const double velocidadInicialY = 3;
-bool jumping = false;
+bool jumping = true;
 bool falling = false;
 double velocidadX = velocidadInicialX;
 double velocidadY = velocidadInicialY;
@@ -464,32 +464,32 @@ void manejoEventos() {
 						else if (mode == LUCES_MODE) {
 							switch (selected_LUCES) {
 							case LUZ1_POS1:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion[i] = pos1[i];
 								}
 								break;
 							case LUZ2_POS1:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion1[i] = pos1[i];
 								}
 								break;
 							case LUZ1_POS2:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion[i] = pos2[i];
 								}
 								break;
 							case LUZ2_POS2:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion1[i] = pos2[i];
 								}
 								break;
 							case LUZ1_POS3:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion[i] = pos3[i];
 								}
 								break;
 							case LUZ2_POS3:
-								for (int i = 0; i < 3; i++) {
+								for (int i = 0; i < 4; i++) {
 									luz_posicion1[i] = pos3[i];
 								}
 								break;
@@ -614,7 +614,7 @@ void manejoEventos() {
 							selected_NIVELES = UNO;
 						}
 						else if(mode== IN_GAME){
-							jumping = !jumping;
+							//jumping = !jumping;
 						}
 						else if (mode == SETTINGS_MODE) {
 							if (selected_SETTINGS == TEXTURAS) {
@@ -2297,7 +2297,7 @@ void end_game() {
 	posx = 0, posy = -1.4;
 	posyWorld = 0;
 	posyWorld_delta = 0;
-	jumping = false;
+	jumping = true;
 	falling = false;
 	velocidadX = velocidadInicialX;
 	velocidadY = velocidadInicialY;
@@ -2340,10 +2340,10 @@ int main(int argc, char *argv[]) {
 
 	objetos3d = cargarObjetos3d();
 	cargarTexturas();
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		luz_posicion1[i] = pos2[i];
 	}
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		luz_posicion[i] = pos1[i];
 	}
 	//FIN INICIALIZACION 
