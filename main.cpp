@@ -98,7 +98,7 @@ float posyWorld_delta = 0;
 GLuint* texturas;
 GLuint* texturas_digitos;
 GLuint* texturas_menu;
-float tamaños[3] = { 0.6, 1.2, 0.9 };
+float tamanios[3] = { 0.6, 1.2, 0.9 };
 GLfloat pos1[3] = { 0.0, 1.0, 8.0 };
 GLfloat pos2[3] = { 1.0, 0.0, 8.0 };
 GLfloat pos3[3] = { 0.0, 0.0, 0.0 };
@@ -298,12 +298,12 @@ void inicializar_plataformas() {
 		plataforma1.x = x_plat;
 		plataforma1.y = i * 1.5 - 2;
 		if (active_level == UNO) {
-			plataforma1.tamaño = tamaños[1];
+			plataforma1.tamaño = tamanios[1];
 		}
 		else {
 			int tam = rand() % 3;
 			cout << tam;
-			plataforma1.tamaño = tamaños[tam];
+			plataforma1.tamaño = tamanios[tam];
 		}
 		plataformas.push(plataforma1);
 	}
@@ -2117,11 +2117,11 @@ void actualizo_plataformas() {
 		plat.x = (rand() % 5) - 2;
 		plat.y = plat_vieja.y + (1.5*15);
 		if (active_level == UNO) {
-			plat.tamaño = tamaños[1];
+			plat.tamaño = tamanios[1];
 		}
 		else {
 			int tamaño = rand() % 3;
-			plat.tamaño = tamaños[tamaño];
+			plat.tamaño = tamanios[tamaño];
 		}
 		plataformas.push(plat);
 	}
