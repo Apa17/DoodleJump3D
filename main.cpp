@@ -712,169 +712,169 @@ void cargarTexturas() {
 	glGenTextures(34, texturas_menu);
 
 	//archivos
-	char archivo[] = "../canon.png";
+	char archivo[] = "./textures/canon.png";
 	cargarTextura(archivo,0, texturas);
 
-	char archivo2[] = "../score.png";
+	char archivo2[] = "./textures/score.png";
 	cargarTextura(archivo2,1, texturas);
 
-	char archivo3[] = "../time.png";
+	char archivo3[] = "./textures/time.png";
 	cargarTextura(archivo3, 2, texturas);
 
-	char archivo4[] = "../fondo.jpg";
+	char archivo4[] = "./textures/fondo.jpg";
 	cargarTextura(archivo4, 3, texturas);
 
-	char archivo5[] = "../marron.jpg";
+	char archivo5[] = "./textures/marron.jpg";
 	cargarTextura(archivo5, 4, texturas);
 
-	char j[] = "../rojo.png";
+	char j[] = "./textures/rojo.png";
 	cargarTextura(j, 5, texturas);
 
-	char fondo_jungla[] = "../fondo_jungla.jpg";
+	char fondo_jungla[] = "./textures/fondo_jungla.jpg";
 	cargarTextura(fondo_jungla, 6, texturas);
 
-	char grass[] = "../grass.jpg";
+	char grass[] = "./textures/grass.jpg";
 	cargarTextura(grass, 7, texturas);
 
 
 	// Cargo texturas de numeros
-	char archivo_temp[] = "../0.png";
+	char archivo_temp[] = "./textures/0.png";
 	cargarTextura(archivo_temp, 0, texturas_digitos);
 
-	archivo_temp[3] = '1';
+	archivo_temp[11] = '1';
 	cargarTextura(archivo_temp, 1, texturas_digitos);
 
-	archivo_temp[3] = '2';
+	archivo_temp[11] = '2';
 	cargarTextura(archivo_temp, 2, texturas_digitos);
 
-	archivo_temp[3] = '3';
+	archivo_temp[11] = '3';
 	cargarTextura(archivo_temp, 3, texturas_digitos);
 
-	archivo_temp[3] = '4';
+	archivo_temp[11] = '4';
 	cargarTextura(archivo_temp, 4, texturas_digitos);
 
-	archivo_temp[3] = '5';
+	archivo_temp[11] = '5';
 	cargarTextura(archivo_temp, 5, texturas_digitos);
 
-	archivo_temp[3] = '6';
+	archivo_temp[11] = '6';
 	cargarTextura(archivo_temp, 6, texturas_digitos);
 
-	archivo_temp[3] = '7';
+	archivo_temp[11] = '7';
 	cargarTextura(archivo_temp, 7, texturas_digitos);
 
-	archivo_temp[3] = '8';
+	archivo_temp[11] = '8';
 	cargarTextura(archivo_temp, 8, texturas_digitos);
 
-	archivo_temp[3] = '9';
+	archivo_temp[11] = '9';
 	cargarTextura(archivo_temp, 9, texturas_digitos);
 
 
-	char archivo_punto[] = "../punto.png";
+	char archivo_punto[] = "./textures/punto.png";
 	cargarTextura(archivo_punto, 10, texturas_digitos);
 
 
 	// Cargar texturas menus
-	char niveles[] = "../niveles.png";
+	char niveles[] = "./textures/niveles.png";
 	cargarTextura(niveles, 0, texturas_menu);
 
-	char settings[] = "../settings.png";
+	char settings[] = "./textures/settings.png";
 	cargarTextura(settings, 1, texturas_menu);
 
 	// Cargar texturas menus
-	char niveles_s[] = "../niveles_selected.png";
+	char niveles_s[] = "./textures/niveles_selected.png";
 	cargarTextura(niveles_s, 2, texturas_menu);
 
-	char settings_s[] = "../settings_selected.png";
+	char settings_s[] = "./textures/settings_selected.png";
 	cargarTextura(settings_s, 3, texturas_menu);
 
-	char velocidad[] = "../velocidad.png";
+	char velocidad[] = "./textures/velocidad.png";
 	cargarTextura(velocidad, 4, texturas_menu);
 
-	char textures[] = "../texturas.png";
+	char textures[] = "./textures/texturas.png";
 	cargarTextura(textures, 5, texturas_menu);
 
-	char wireframe[] = "../wireframe.png";
+	char wireframe[] = "./textures/wireframe.png";
 	cargarTextura(wireframe, 6, texturas_menu);
 
-	char facetado[] = "../facetado.png";
+	char facetado[] = "./textures/facetado.png";
 	cargarTextura(facetado, 7, texturas_menu);
 
-	char velocidad_s[] = "../velocidad_selected.png";
+	char velocidad_s[] = "./textures/velocidad_selected.png";
 	cargarTextura(velocidad_s, 8, texturas_menu);
 
-	char textures_s[] = "../texturas_selected.png";
+	char textures_s[] = "./textures/texturas_selected.png";
 	cargarTextura(textures_s, 9, texturas_menu);
 
-	char wireframe_s[] = "../wireframe_selected.png";
+	char wireframe_s[] = "./textures/wireframe_selected.png";
 	cargarTextura(wireframe_s, 10, texturas_menu);
 
-	char facetado_s[] = "../facetado_selected.png";
+	char facetado_s[] = "./textures/facetado_selected.png";
 	cargarTextura(facetado_s, 11, texturas_menu);
 
-	char check[] = "../check.png";
+	char check[] = "./textures/check.png";
 	cargarTextura(check, 12, texturas_menu);
 
-	char nocheck[] = "../nocheck.png";
+	char nocheck[] = "./textures/nocheck.png";
 	cargarTextura(nocheck, 13, texturas_menu);
 
-	char reanudar[] = "../reanudar.png";
+	char reanudar[] = "./textures/reanudar.png";
 	cargarTextura(reanudar, 14, texturas_menu);
 
-	char reanudar_s[] = "../reanudar_selected.png";
+	char reanudar_s[] = "./textures/reanudar_selected.png";
 	cargarTextura(reanudar_s, 15, texturas_menu);
 
-	char f[] = "../f.png";
+	char f[] = "./textures/f.png";
 	cargarTextura(f, 16, texturas_menu);
 
-	char i[] = "../i.png";
+	char i[] = "./textures/i.png";
 	cargarTextura(i, 17, texturas_menu);
 
-	char gameover[] = "../gameover.png";
+	char gameover[] = "./textures/gameover.png";
 	cargarTextura(gameover, 18, texturas_menu);
 
-	char iralmenu[] = "../iralmenu.png";
+	char iralmenu[] = "./textures/iralmenu.png";
 	cargarTextura(iralmenu, 19, texturas_menu);
 
-	char luces[] = "../luces.png";
+	char luces[] = "./textures/luces.png";
 	cargarTextura(luces, 20, texturas_menu);
 
-	char luces_s[] = "../luces_selected.png";
+	char luces_s[] = "./textures/luces_selected.png";
 	cargarTextura(luces_s, 21, texturas_menu);
 
-	char posicion[] = "../posicion.png";
+	char posicion[] = "./textures/posicion.png";
 	cargarTextura(posicion, 22, texturas_menu);
 
-	char color[] = "../color.png";
+	char color[] = "./textures/color.png";
 	cargarTextura(color, 23, texturas_menu);
 
-	char luz1[] = "../luz1.png";
+	char luz1[] = "./textures/luz1.png";
 	cargarTextura(luz1, 24, texturas_menu);
 
-	char luz2[] = "../luz2.png";
+	char luz2[] = "./textures/luz2.png";
 	cargarTextura(luz2, 25, texturas_menu);
 
-	char pos1t[] = "../pos1.png";
+	char pos1t[] = "./textures/pos1.png";
 	cargarTextura(pos1t, 26, texturas_menu);
 
-	char pos2t[] = "../pos2.png";
+	char pos2t[] = "./textures/pos2.png";
 	cargarTextura(pos2t, 27, texturas_menu);
 
-	char pos3t[] = "../pos3.png";
+	char pos3t[] = "./textures/pos3.png";
 	cargarTextura(pos3t, 28, texturas_menu);
 
-	char flecha[] = "../flecha.png";
+	char flecha[] = "./textures/flecha.png";
 	cargarTextura(flecha, 29, texturas_menu);
 
-	char clasico[] = "../clasico.png";
+	char clasico[] = "./textures/clasico.png";
 	cargarTextura(clasico, 30, texturas_menu);
 
-	char clasico_s[] = "../clasico_selected.png";
+	char clasico_s[] = "./textures/clasico_selected.png";
 	cargarTextura(clasico_s, 31, texturas_menu);
 
-	char jungla[] = "../jungla.png";
+	char jungla[] = "./textures/jungla.png";
 	cargarTextura(jungla, 32, texturas_menu);
 
-	char jungla_s[] = "../jungla_selected.png";
+	char jungla_s[] = "./textures/jungla_selected.png";
 	cargarTextura(jungla_s, 33, texturas_menu);
 
 	
