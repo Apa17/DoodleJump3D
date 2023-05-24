@@ -23,7 +23,7 @@ system_clock::time_point starting_time, current_time, previous_time, current_pau
 double total_time;
 int score = 0;
 bool fin;
-float velocidad_multiplicador = 1;
+float velocidad_multiplicador = 0.7;
 bool textOn = true;
 bool textOnAux;
 bool wireframe = false;
@@ -100,16 +100,16 @@ GLuint* texturas_digitos;
 GLuint* texturas_menu;
 float tamaños[3] = { 0.6, 1.2, 0.9 };
 GLfloat pos1[4] = {0.0f, 1.0f, 8.0f, 0.0f};
-GLfloat pos2[4] = {1.0f, 0.0f, 8.0f, 0.0f};
+GLfloat pos2[4] = {0.5f, 1.0f, -8.0f, 0.0f};
 GLfloat pos3[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 GLfloat luz_posicion[4];
 GLfloat luz_posicion1[4];
 GLfloat colorLuz[4] = { 1, 1, 1, 0.1 };
 GLfloat colorLuz1[4] = { 1, 1, 1, 0.1 };
 GLfloat blanco[4] = { 1, 1, 1, 0.1 };
-GLfloat verde[4] = { 0, 0.1, 0, 0.1 };
-GLfloat azul[4] = { 0, 0, 0.1, 0.1 };
-GLfloat rojo[4] = { 0.1, 0, 0, 0.1 };
+GLfloat verde[4] = { 0, 1, 0, 0.1 };
+GLfloat azul[4] = { 0, 0, 1, 0.1 };
+GLfloat rojo[4] = { 1, 0, 0, 0.1 };
 GLfloat ambiente[4] = {0.3, 0.3, 0.3, 1};
 GLfloat specular[4] = {0.5, 0.5, 0.5, 1};
 GLfloat direccion_luz[3] = { 0.0, 0.0, 0.0 };
@@ -427,7 +427,7 @@ void manejoEventos() {
 									velocidad_multiplicador = 1.5;
 								}
 								else {
-									velocidad_multiplicador = 1;
+									velocidad_multiplicador = 0.7;
 								}
 							}
 							if (selected_SETTINGS == TEXTURAS) {
